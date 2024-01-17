@@ -41,35 +41,36 @@ If the indexer is stopped for a while, it will need to catch up on the missed bl
 ### Configuration
 
 You will need to create a `config.toml` file in the root directory of the project. You can use [config.example.toml](config.example.toml) as a template.
-
-Here is example config for a local setup:
+Here is an example config for a local setup:
 
 ```toml
-ethNodeAddr			= "http://127.0.0.1:8500"
-bscNodeAddr 		= "http://127.0.0.1:8400"
+ethNodeAddr = "http://127.0.0.1:8500"
+bscNodeAddr = "http://127.0.0.1:8400"
 
 [tokens]
-batchSize 			= 10
-batchConcurrency 	= 2
-
+batchSize        = 10
+batchConcurrency = 2
 
 [pairs]
-batchSize 			= 10
-batchConcurrency 	= 2
-blockRange 			= 200
-
+batchSize        = 10
+batchConcurrency = 2
+blockRange       = 200
 
 [storage]
-driver				= "postgres"
-
+driver = "postgres"
 
 [postgres]
-user 				= "postgres"
-password 			= "postgres"
-host				= "localhost"
-port				= "5432"
-sslmode 			= "disable"
+user     = "postgres"
+password = "postgres"
+host     = "localhost"
+port     = "5432"
+sslmode  = "disable"
 
+[api]
+host    = "localhost"
+port    = 8080
+useAuth = true
+apiKey  = "my-api-key"
 
 ```
 
@@ -78,6 +79,24 @@ sslmode 			= "disable"
 ```bash
 go run ./cmd/api/main.go --config config.toml
 ```
+
+### API
+
+The API is JSON-RPC 2.0 compliant and is served on port 8080 by default.
+The available methods are:
+
+- `idx_getBlockTimestamps` - Get the timestamp for a range of block numbers
+- `idx_getBlockAtTimestamp` - Get the block number at a timestamp
+
+- `idx_getTokenByAddress` - Get info about a token by address
+- `idx_getTokensByCreator` - Get info about tokens created by an address
+- `idx_getTokensInBlock` - Get info about tokens created in a block range
+- `idx_findTokens` - Find tokens by using find params
+
+- `idx_getPairByAddress` - Get info about a pair by address
+- `idx_getPairsByToken` - Get info about pairs containing a token
+- `idx_getPairsInBlock` - Get info about pairs created in a block range
+- `idx_findPairs` - Find pairs by using find params
 
 ### Indexed Types
 

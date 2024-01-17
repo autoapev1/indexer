@@ -8,31 +8,34 @@ import (
 )
 
 const defaultConfig = `
-ethNodeAddr			= "http://127.0.0.1:8500"
-bscNodeAddr 		= "http://127.0.0.1:8400"
+ethNodeAddr = "http://127.0.0.1:8500"
+bscNodeAddr = "http://127.0.0.1:8400"
 
 [tokens]
-batchSize 			= 10
-batchConcurrency 	= 2
-
+batchSize        = 10
+batchConcurrency = 2
 
 [pairs]
-batchSize 			= 10
-batchConcurrency 	= 2
-blockRange 			= 200
-
+batchSize        = 10
+batchConcurrency = 2
+blockRange       = 200
 
 [storage]
-driver				= "postgres"
-
+driver = "postgres"
 
 [postgres]
-user 				= "postgres"
-password 			= "postgres"
-name 				= "postgres"
-host				= "localhost"
-port				= "5432"
-sslmode 			= "disable"
+user     = "postgres"
+password = "postgres"
+host     = "localhost"
+port     = "5432"
+sslmode  = "disable"
+
+[api]
+host    = "localhost"
+port    = 8080
+useAuth = true
+apiKey  = "my-api-key"
+
 `
 
 func getDefaultConfig() Config {
