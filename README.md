@@ -92,7 +92,8 @@ go run ./cmd/api/main.go --config config.toml
 The API is JSON-RPC 2.0 compliant and is served on port 8080 by default.
 The available methods are:
 
-- `idx_getBlockNumber` - Get the current block number
+- `idx_getBlockNumber` - Get the current block number for a given chain
+- `idx_getChains` - Get the chain IDs for the supported chains
 
 - `idx_getBlockTimestamps` - Get the timestamp for a range of block numbers
 - `idx_getBlockAtTimestamp` - Get the block number at a timestamp
