@@ -4,7 +4,9 @@ go 1.21.4
 
 require (
 	github.com/ethereum/go-ethereum v1.13.10
+	github.com/google/uuid v1.3.0
 	github.com/pelletier/go-toml/v2 v2.1.1
+	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee
 	github.com/uptrace/bun/dialect/pgdialect v1.1.17
 	github.com/uptrace/bun/driver/pgdriver v1.1.17
 )

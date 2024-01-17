@@ -34,7 +34,9 @@ sslmode  = "disable"
 host    = "localhost"
 port    = 8080
 useAuth = true
-apiKey  = "my-api-key"
+masterKey  = "my-master-key" # can be used to generate api keys
+rateLimitStrategy = "ip" # ip or key
+rateLimit = 500 # per second
 
 `
 
@@ -48,7 +50,7 @@ func getDefaultConfig() Config {
 	return config
 }
 
-// Config holds the global configuration which is READONLY.
+// Config has global config
 var config Config = getDefaultConfig()
 
 type Token struct {
@@ -62,6 +64,15 @@ type Pairs struct {
 }
 type Storage struct {
 	Driver string
+}
+
+type Api struct {
+	Host              string
+	Port              int
+	UseAuth           bool   // todo more auth methods
+	ApiKey            string // rather than hardcoded
+	RateLimitStrategy string
+	RateLimit         int
 }
 
 type Postgres struct {

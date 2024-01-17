@@ -44,33 +44,39 @@ You will need to create a `config.toml` file in the root directory of the projec
 Here is an example config for a local setup:
 
 ```toml
-ethNodeAddr = "http://127.0.0.1:8500"
-bscNodeAddr = "http://127.0.0.1:8400"
+ethNodeAddr = "http://127.0.0.1:8500" # archive node
+bscNodeAddr = "http://127.0.0.1:8400" # archive node
 
 [tokens]
-batchSize        = 10
-batchConcurrency = 2
+batchSize        = 10 # number of tokens to fetch in each batch
+batchConcurrency = 2  # number of batches to fetch concurrently
 
 [pairs]
-batchSize        = 10
-batchConcurrency = 2
-blockRange       = 200
+batchSize        = 10  # number of pairs to fetch in each batch
+batchConcurrency = 2   # number of batches to fetch concurrently
+blockRange       = 200 # number of blocks to fetch in each batch
 
 [storage]
-driver = "postgres"
+driver = "postgres" # postgres, mongodb, ...etc
 
-[postgres]
+[postgres] # only required if using postgres
 user     = "postgres"
 password = "postgres"
 host     = "localhost"
 port     = "5432"
 sslmode  = "disable"
 
+[mongodb] # only required if using mongodb
+uri = "mongodb://localhost:27017"
+
+
 [api]
-host    = "localhost"
-port    = 8080
-useAuth = true
-apiKey  = "my-api-key"
+host              = "localhost"
+port              = 8080
+authMethod        = "memory" # memory, postgres
+authEncryptionKey = "my-secret-key"
+keyType           = "uuid" # uuid, hex32, hex64, hex128, hex256
+masterApiKey      = "master-api-key"
 
 ```
 
@@ -80,10 +86,12 @@ apiKey  = "my-api-key"
 go run ./cmd/api/main.go --config config.toml
 ```
 
-### API
+### Public API
 
 The API is JSON-RPC 2.0 compliant and is served on port 8080 by default.
 The available methods are:
+
+- `idx_getBlockNumber` - Get the current block number
 
 - `idx_getBlockTimestamps` - Get the timestamp for a range of block numbers
 - `idx_getBlockAtTimestamp` - Get the block number at a timestamp
@@ -97,6 +105,23 @@ The available methods are:
 - `idx_getPairsByToken` - Get info about pairs containing a token
 - `idx_getPairsInBlock` - Get info about pairs created in a block range
 - `idx_findPairs` - Find pairs by using find params
+
+- `idx_getWalletBalances` - Get wallet balances for a pair
+
+- `idx_getTokenHolders` - Get token holders for a token
+
+- `idx_getOHLCVChartData` - Get OHLCV chart data for a pair
+
+### Private API
+
+Private API methods require the Master API key to be set in the config file.
+The available methods are:
+
+- `auth_generateKey` - Generate a new API key
+- `auth_deleteKey` - Delete an API key
+- `auth_getKeyStats` - Get usage information for an API key
+- `auth_getAuthMethod` - Get the current auth method
+- `auth_getKeyType` - Get the type of API keys used for auth (uuid, hex32, hex64 ...etc)
 
 ### Indexed Types
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/autoapev1/indexer/auth"
 	"github.com/autoapev1/indexer/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -13,6 +14,7 @@ type Server struct {
 	router   *chi.Mux
 	ethStore storage.Store
 	bscStore storage.Store
+	Auth     auth.Provider
 }
 
 // NewServer returns a new server given a Store interface.
@@ -57,7 +59,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRPC(w http.ResponseWriter, r *http.Request) error {
 	var req []*JRPCRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return errDecodeRequestBody
+		writeJSON(w, http.StatusBadRequest, &JRPCResponse{
+			Error: &JRPCError{
+				Code:    -32600,
+				Message: err.Error(),
+			},
+		})
 	}
 
 	var resp []*JRPCResponse
@@ -68,7 +75,7 @@ func (s *Server) handleRPC(w http.ResponseWriter, r *http.Request) error {
 		default:
 			resp = append(resp, &JRPCResponse{
 				ID:      r.ID,
-				JSONRPC: r.JSONRPC,
+				JSONRPC: "2.0",
 				Error: &JRPCError{
 					Code:    -32601,
 					Message: "Method not found",
@@ -82,9 +89,16 @@ func (s *Server) handleRPC(w http.ResponseWriter, r *http.Request) error {
 
 func (s *Server) withAPIToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		authHeader := r.Header.Get("Authorization")
+
 		if authHeader != "a2ecf22c-8ec5-4011-9f09-eed4a7bd86e9" {
-			writeJSON(w, http.StatusUnauthorized, ErrorResponse(errUnauthorized))
+			writeJSON(w, http.StatusUnauthorized, &JRPCResponse{
+				Error: &JRPCError{
+					Code:    -32600,
+					Message: errUnauthorized.Error(),
+				},
+			})
 			return
 		}
 		next.ServeHTTP(w, r)
