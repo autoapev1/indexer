@@ -20,7 +20,7 @@ func main() {
 	}
 
 	var (
-		blocks = false
+		blocks = true
 		tokens = true
 		pairs  = true
 	)
@@ -96,7 +96,7 @@ func IngestBlocks(pg *storage.PostgresDB) error {
 		return err
 	}
 
-	err = pg.BulkSetBlockTimestamp(data)
+	err = pg.BulkInsertBlockTimestamp(data)
 	if err != nil {
 		return err
 	}

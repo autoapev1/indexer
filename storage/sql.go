@@ -29,6 +29,7 @@ func NewPostgresDB(conf config.Postgres) *PostgresDB {
 	PostgresDB.DB = db
 
 	//db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	//db.SetConnMaxIdleTime(30 * time.Second)
 
 	return PostgresDB
 }
@@ -40,10 +41,7 @@ func (p *PostgresDB) Init() error {
 		return err
 	}
 
-	err = p.CreateInexes()
-	if err != nil {
-		return err
-	}
+	p.CreateIndexes()
 
 	logger.Time("Init()", time.Since(st), true)
 
@@ -51,10 +49,13 @@ func (p *PostgresDB) Init() error {
 }
 
 func (p *PostgresDB) CreateTables() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	_, err := p.DB.NewCreateTable().
 		Model(&types.BlockTimestamp{}).
 		IfNotExists().
-		Exec(context.Background())
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func (p *PostgresDB) CreateTables() error {
 	_, err = p.DB.NewCreateTable().
 		IfNotExists().
 		Model(&types.Token{}).
-		Exec(context.Background())
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (p *PostgresDB) CreateTables() error {
 	_, err = p.DB.NewCreateTable().
 		Model(&types.Pair{}).
 		IfNotExists().
-		Exec(context.Background())
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -78,35 +79,33 @@ func (p *PostgresDB) CreateTables() error {
 	return nil
 }
 
-func (p *PostgresDB) CreateInexes() error {
-	_, err := p.DB.NewCreateIndex().
+func (p *PostgresDB) CreateIndexes() {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	_, _ = p.DB.NewCreateIndex().
+		Concurrently().
 		Model(&types.BlockTimestamp{}).
 		Column("block").
 		Column("timestamp").
-		Exec(context.Background())
-	if err != nil {
-		return err
-	}
+		Index("block_timestamp_block_timestamp_idx").
+		Exec(ctx)
 
-	_, err = p.DB.NewCreateIndex().
+	_, _ = p.DB.NewCreateIndex().
 		Model(&types.Token{}).
 		Column("address").
-		Exec(context.Background())
-	if err != nil {
-		return err
-	}
+		Index("token_address_idx").
+		Exec(ctx)
 
-	_, err = p.DB.NewCreateIndex().
+	_, _ = p.DB.NewCreateIndex().
 		Model(&types.Pair{}).
 		Column("token0_address").
 		Column("token1_address").
 		Column("pool_address").
-		Exec(context.Background())
-	if err != nil {
-		return err
-	}
+		Index("pair_addresses_idx").
+		Exec(ctx)
 
-	return nil
 }
 
 func (p *PostgresDB) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimestamp, error) {
@@ -121,7 +120,7 @@ func (p *PostgresDB) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimesta
 	return blockTimestamp, nil
 }
 
-func (p *PostgresDB) SetBlockTimestamp(blockTimestamp *types.BlockTimestamp) error {
+func (p *PostgresDB) InsertBlockTimestamp(blockTimestamp *types.BlockTimestamp) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(blockTimestamp).Exec(ctx)
 	if err != nil {
@@ -131,7 +130,7 @@ func (p *PostgresDB) SetBlockTimestamp(blockTimestamp *types.BlockTimestamp) err
 	return nil
 }
 
-func (p *PostgresDB) BulkSetBlockTimestamp(blockTimestamps []*types.BlockTimestamp) error {
+func (p *PostgresDB) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockTimestamp) error {
 	ctx := context.Background()
 	batchSize := 10000
 
@@ -164,6 +163,17 @@ func (p *PostgresDB) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTime
 	}
 
 	return blockTimestamps, nil
+}
+
+func (p *PostgresDB) GetHight() (int64, error) {
+	var block int64
+	ctx := context.Background()
+	err := p.DB.NewSelect().ColumnExpr("MAX(block_number)").Scan(ctx, &block)
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
 }
 
 func (p *PostgresDB) GetTokenInfo(address string) (*types.Token, error) {
@@ -207,6 +217,17 @@ func (p *PostgresDB) BulkInsertTokenInfo(tokenInfos []*types.Token) error {
 	return nil
 }
 
+func (p *PostgresDB) GetTokenCount() (int64, error) {
+	var count int64
+	ctx := context.Background()
+	err := p.DB.NewSelect().ColumnExpr("COUNT(*)").Model(&types.Token{}).Scan(ctx, &count)
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
+}
+
 func (p *PostgresDB) GetPairInfoByPair(pair string) (*types.Pair, error) {
 	pairInfo := new(types.Pair)
 	ctx := context.Background()
@@ -229,7 +250,7 @@ func (p *PostgresDB) GetPairsWithToken(address string) ([]*types.Pair, error) {
 	return pairInfos, nil
 }
 
-func (p *PostgresDB) SetPairInfo(pairInfo *types.Pair) error {
+func (p *PostgresDB) InsertPairInfo(pairInfo *types.Pair) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(pairInfo).Exec(ctx)
 	if err != nil {
@@ -258,6 +279,17 @@ func (p *PostgresDB) BulkInsertPairInfo(pairInfos []*types.Pair) error {
 	}
 
 	return nil
+}
+
+func (p *PostgresDB) GetPairCount() (int64, error) {
+	var count int64
+	ctx := context.Background()
+	err := p.DB.NewSelect().ColumnExpr("COUNT(*)").Model(&types.Pair{}).Scan(ctx, &count)
+	if err != nil {
+		return count, err
+	}
+
+	return count, nil
 }
 
 func (p *PostgresDB) GetUniqueAddressesFromPairs() ([]string, error) {
