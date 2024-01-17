@@ -1,0 +1,247 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "PairAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "RouterAddress",
+        "type": "address"
+      }
+    ],
+    "name": "Scan",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bool",
+            "name": "Success",
+            "type": "bool"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "Address",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "Symbol",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "TotalSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "CirculatingSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint8",
+                "name": "Decimals",
+                "type": "uint8"
+              }
+            ],
+            "internalType": "struct PairChecker.TokenInfo",
+            "name": "Token",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "Address",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "Symbol",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "TotalSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "CirculatingSupply",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint8",
+                "name": "Decimals",
+                "type": "uint8"
+              }
+            ],
+            "internalType": "struct PairChecker.TokenInfo",
+            "name": "Weth",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bool",
+                "name": "IsInverted",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "IsLiquidityAdded",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "CanSell",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "CanBuy",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint24",
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "internalType": "address",
+                "name": "Token0",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "Token1",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "CurrentPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "ApproveGasUsed",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "ReserveWeth",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "ReserveToken",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "AmountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "AmountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "QuoteAmountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "GasUsed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "Tax",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct PairChecker.Swap",
+                "name": "Buy",
+                "type": "tuple"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "AmountIn",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "AmountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "QuoteAmountOut",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "GasUsed",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "Tax",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct PairChecker.Swap",
+                "name": "Sell",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct PairChecker.PairInfo",
+            "name": "Pair",
+            "type": "tuple"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ChainID",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "Err",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct PairChecker.Result",
+        "name": "r",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
+  }
+]

@@ -1,0 +1,174 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "routerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "analyzeToken",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bool",
+            "name": "checkComplete",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "circulatingSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "decimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "pairExists",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "LPAdded",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "deadblock",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "honeypot",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "errorMessage",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "pair",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialPairWETH",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialPairToken",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyTax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sellTax",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sellGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyAmountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteBuyAmountsOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sellAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sellAmountOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteSellAmountsOut",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteBuyAmountsOut_price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ActualBuyPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "quoteSellAmountsOut_price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ActualSellPrice",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct TokenAnalyzer.AnalysisResult",
+        "name": "result",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  { "stateMutability": "payable", "type": "receive" }
+]
