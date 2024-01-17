@@ -19,7 +19,6 @@ driver				= "postgres"
 [postgres]
 user 				= "postgres"
 password 			= "postgres"
-name 				= "postgres"
 host				= "localhost"
 port				= "5432"
 sslmode 			= "disable"

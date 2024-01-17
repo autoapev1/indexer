@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (n *Network) GetTokenInfo(ctx context.Context, address common.Address) *types.TokenInfo {
+func (n *Network) GetTokenInfo(ctx context.Context, address common.Address) *types.Token {
 	var (
 		st     = time.Now()
-		result = &types.TokenInfo{}
+		result = &types.Token{}
 		err    error
 	)
 	defer func() {

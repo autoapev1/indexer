@@ -1,30 +1,30 @@
 package types
 
-type TokenInfo struct {
+type Token struct {
 	Address        string `json:"address" bun:",pk"`
 	Name           string `json:"name"`
 	Symbol         string `json:"symbol"`
-	Decimals       int    `json:"decimals"`
+	Decimals       uint8  `json:"decimals"`
 	Creator        string `json:"creator"`
-	CreatedAtBlock int    `json:"created_at"`
-	ChainID        int    `json:"chain_id"`
+	CreatedAtBlock int64  `json:"created_at"`
+	ChainID        int16  `json:"chain_id"`
 }
 
 type BlockTimestamp struct {
-	Block     int `json:"b" bun:",pk"`
-	Timestamp int `json:"t"`
+	Block     int64 `json:"b" bun:",pk"`
+	Timestamp int64 `json:"t"`
 }
 
-type PairInfo struct {
-	Token0      string `json:"token0" bun:",pk"`
-	Token1      string `json:"token1" bun:",pk"`
-	Fee         int    `json:"fee"`
-	TickSpacing int    `json:"tick_spacing"`
-	Pool        string `json:"pool"`
-	PoolType    int    `json:"pool_type"`
-	CreatedAt   int    `json:"created_at"`
-	Hash        string `json:"hash"`
-	ChainID     int    `json:"chain_id"`
+type Pair struct {
+	Token0Address string `json:"token0_address"`
+	Token1Address string `json:"token1_address"`
+	Fee           int64  `json:"fee"`
+	TickSpacing   int64  `json:"tick_spacing"`
+	PoolAddress   string `json:"pool_address"`
+	PoolType      uint8  `json:"pool_type"`
+	CreatedAt     int64  `json:"created_at"`
+	Hash          string `json:"hash" bun:",pk"`
+	ChainID       int16  `json:"chain_id"`
 }
 
 type OHLC struct {

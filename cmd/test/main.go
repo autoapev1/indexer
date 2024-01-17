@@ -2,13 +2,26 @@ package main
 
 import (
 	"github.com/autoapev1/indexer/config"
-	store "github.com/autoapev1/indexer/storage"
+	"github.com/autoapev1/indexer/storage"
 )
 
 func main() {
-	db := store.NewPostgresDB(config.Get().Postgres)
+	EthConfig := config.Get().Postgres
+	EthConfig.Name = "eth"
 
-	err := db.Init()
+	BscConfig := config.Get().Postgres
+	BscConfig.Name = "bsc"
+
+	edb := storage.NewPostgresDB(EthConfig)
+
+	err := edb.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	bdb := storage.NewPostgresDB(BscConfig)
+
+	err = bdb.Init()
 	if err != nil {
 		panic(err)
 	}
