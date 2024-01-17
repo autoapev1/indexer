@@ -1,7 +1,7 @@
 package types
 
 type TokenInfo struct {
-	Address        string `json:"address"`
+	Address        string `json:"address" bun:",pk"`
 	Name           string `json:"name"`
 	Symbol         string `json:"symbol"`
 	Decimals       int    `json:"decimals"`
@@ -11,18 +11,18 @@ type TokenInfo struct {
 }
 
 type BlockTimestamp struct {
-	Block     int `json:"b"`
+	Block     int `json:"b" bun:",pk"`
 	Timestamp int `json:"t"`
 }
 
 type PairInfo struct {
-	Token0      string `json:"token0"`
-	Token1      string `json:"token1"`
+	Token0      string `json:"token0" bun:",pk"`
+	Token1      string `json:"token1" bun:",pk"`
 	Fee         int    `json:"fee"`
 	TickSpacing int    `json:"tick_spacing"`
 	Pool        string `json:"pool"`
 	PoolType    int    `json:"pool_type"`
-	CreatedAt   int    `json:"created_t"`
+	CreatedAt   int    `json:"created_at"`
 	Hash        string `json:"hash"`
 	ChainID     int    `json:"chain_id"`
 }
