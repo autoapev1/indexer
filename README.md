@@ -7,12 +7,13 @@ Currently supports Ethereum and Binance Smart Chain, using Uniswap and PancakeSw
 
 ### What does it Index?
 
-- BlockTimestamps
-- Token Info
-- Pair Info
-- Wallet Balances TODO
-- Token Holders TODO
-- Chart Data TODO
+- [x] BlockTimestamps
+- [x] Token Info
+- [x] Pair Info
+- [ ] Wallet Balances
+- [ ] Token Holders
+- [ ] Liquidity Token Holders
+- [ ] Chart Data
 
 ### How does it get data?
 
@@ -29,7 +30,7 @@ If the indexer is stopped for a while, it will need to catch up on the missed bl
 
 ### Requirements
 
-- You will require a private (erigon) archive node to create the database from scratch, alternatively, you can download a database dump from [TODO]
+- You will require a private (erigon) archive node to create the database from scratch, alternatively, you can download a database dump from [TODO].
 - You will require a database to store the data. Currently, only Postgres is supported, but `storage.Store` is an interface so it's easy to add more.
   It is recommended to use NVMe SSD for storage, You will need around:
   - 7GB of disk space for BlockTimestamps (ETH + BSC)
