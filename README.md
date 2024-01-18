@@ -45,39 +45,39 @@ You will need to create a `config.toml` file in the root directory of the projec
 Here is an example config for a local setup:
 
 ```toml
-ethNodeAddr = "http://127.0.0.1:8500" # archive node
-bscNodeAddr = "http://127.0.0.1:8400" # archive node
+ethNodeAddr = "http://127.0.0.1:8500"
+bscNodeAddr = "http://127.0.0.1:8400"
 
 [tokens]
-batchSize        = 10 # number of tokens to fetch in each batch
-batchConcurrency = 2  # number of batches to fetch concurrently
+batchSize 		 = 10
+batchConcurrency = 2
 
 [pairs]
-batchSize        = 10  # number of pairs to fetch in each batch
-batchConcurrency = 2   # number of batches to fetch concurrently
-blockRange       = 200 # number of blocks to fetch in each batch
+batchSize		 = 10
+batchConcurrency = 2
+blockRange		 = 200
 
 [storage]
-driver = "postgres" # postgres, mongodb, ...etc
+driver = "postgres"		# postgres (only supported for now)
 
-[postgres] # only required if using postgres
-user     = "postgres"
+[storage.postgres]
+user	 = "postgres"
 password = "postgres"
-host     = "localhost"
-port     = "5432"
+host	 = "localhost"
+port	 = "5432"
 sslmode  = "disable"
 
-[mongodb] # only required if using mongodb
-uri = "mongodb://localhost:27017"
-
-
 [api]
-host              = "localhost"
-port              = 8080
-authMethod        = "memory" # memory, postgres
-authEncryptionKey = "my-secret-key"
-keyType           = "uuid" # uuid, hex32, hex64, hex128, hex256
-masterApiKey      = "master-api-key"
+host = "localhost"
+port = 8080
+
+authProvider	    = "sql"			    # none / memory / sql
+authKeyType		    = "hex64"		    # uuid / hex16 / hex32 / hex64 / hex128 / hex256
+authDefaultExpirary = 7776000 		    # 90 days in seconds
+authMasterKey 		= "my-master-key"   # used to generate other keys
+
+rateLimitStrategy = "ip" 			    # ip / key / off
+rateLimitRequests = 500				    # per second
 
 ```
 
