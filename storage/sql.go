@@ -15,12 +15,12 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
-type PostgresDB struct {
+type PostgresStore struct {
 	DB *bun.DB
 }
 
-func NewPostgresDB(conf config.PostgresConfig) *PostgresDB {
-	PostgresDB := &PostgresDB{}
+func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
+	PostgresDB := &PostgresStore{}
 	uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s", conf.User, conf.Password, conf.Host, conf.Name, conf.SSLMode)
 
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(uri)))
@@ -34,7 +34,7 @@ func NewPostgresDB(conf config.PostgresConfig) *PostgresDB {
 	return PostgresDB
 }
 
-func (p *PostgresDB) Init() error {
+func (p *PostgresStore) Init() error {
 	st := time.Now()
 	err := p.CreateTables()
 	if err != nil {
@@ -48,7 +48,7 @@ func (p *PostgresDB) Init() error {
 	return nil
 }
 
-func (p *PostgresDB) CreateTables() error {
+func (p *PostgresStore) CreateTables() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -79,7 +79,7 @@ func (p *PostgresDB) CreateTables() error {
 	return nil
 }
 
-func (p *PostgresDB) CreateIndexes() {
+func (p *PostgresStore) CreateIndexes() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -108,7 +108,7 @@ func (p *PostgresDB) CreateIndexes() {
 
 }
 
-func (p *PostgresDB) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimestamp, error) {
+func (p *PostgresStore) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimestamp, error) {
 	blockTimestamp := new(types.BlockTimestamp)
 	ctx := context.Background()
 
@@ -120,7 +120,7 @@ func (p *PostgresDB) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimesta
 	return blockTimestamp, nil
 }
 
-func (p *PostgresDB) InsertBlockTimestamp(blockTimestamp *types.BlockTimestamp) error {
+func (p *PostgresStore) InsertBlockTimestamp(blockTimestamp *types.BlockTimestamp) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(blockTimestamp).Exec(ctx)
 	if err != nil {
@@ -130,7 +130,7 @@ func (p *PostgresDB) InsertBlockTimestamp(blockTimestamp *types.BlockTimestamp) 
 	return nil
 }
 
-func (p *PostgresDB) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockTimestamp) error {
+func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockTimestamp) error {
 	ctx := context.Background()
 	batchSize := 10000
 
@@ -154,7 +154,7 @@ func (p *PostgresDB) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockTime
 	return nil
 }
 
-func (p *PostgresDB) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTimestamp, error) {
+func (p *PostgresStore) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTimestamp, error) {
 	blockTimestamps := []*types.BlockTimestamp{}
 	ctx := context.Background()
 	err := p.DB.NewSelect().Model(&blockTimestamps).Where("block_number >= ? AND block_number <= ?", from, to).Scan(ctx)
@@ -165,7 +165,7 @@ func (p *PostgresDB) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTime
 	return blockTimestamps, nil
 }
 
-func (p *PostgresDB) GetHight() (int64, error) {
+func (p *PostgresStore) GetHight() (int64, error) {
 	var block int64
 	ctx := context.Background()
 	err := p.DB.NewSelect().ColumnExpr("MAX(block_number)").Scan(ctx, &block)
@@ -176,7 +176,7 @@ func (p *PostgresDB) GetHight() (int64, error) {
 	return block, nil
 }
 
-func (p *PostgresDB) GetTokenInfo(address string) (*types.Token, error) {
+func (p *PostgresStore) GetTokenInfo(address string) (*types.Token, error) {
 	tokenInfo := new(types.Token)
 	ctx := context.Background()
 	err := p.DB.NewSelect().Model(tokenInfo).Where("address = ?", address).Scan(ctx)
@@ -187,7 +187,7 @@ func (p *PostgresDB) GetTokenInfo(address string) (*types.Token, error) {
 	return tokenInfo, nil
 }
 
-func (p *PostgresDB) InsertTokenInfo(tokenInfo *types.Token) error {
+func (p *PostgresStore) InsertTokenInfo(tokenInfo *types.Token) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(tokenInfo).Exec(ctx)
 	if err != nil {
@@ -196,7 +196,7 @@ func (p *PostgresDB) InsertTokenInfo(tokenInfo *types.Token) error {
 
 	return nil
 }
-func (p *PostgresDB) BulkInsertTokenInfo(tokenInfos []*types.Token) error {
+func (p *PostgresStore) BulkInsertTokenInfo(tokenInfos []*types.Token) error {
 	ctx := context.Background()
 	batchSize := 10000
 
@@ -217,7 +217,7 @@ func (p *PostgresDB) BulkInsertTokenInfo(tokenInfos []*types.Token) error {
 	return nil
 }
 
-func (p *PostgresDB) GetTokenCount() (int64, error) {
+func (p *PostgresStore) GetTokenCount() (int64, error) {
 	var count int64
 	ctx := context.Background()
 	err := p.DB.NewSelect().ColumnExpr("COUNT(*)").Model(&types.Token{}).Scan(ctx, &count)
@@ -228,7 +228,7 @@ func (p *PostgresDB) GetTokenCount() (int64, error) {
 	return count, nil
 }
 
-func (p *PostgresDB) GetPairInfoByPair(pair string) (*types.Pair, error) {
+func (p *PostgresStore) GetPairInfoByPair(pair string) (*types.Pair, error) {
 	pairInfo := new(types.Pair)
 	ctx := context.Background()
 	err := p.DB.NewSelect().Model(pairInfo).Where("pair = ?", pair).Scan(ctx)
@@ -239,7 +239,7 @@ func (p *PostgresDB) GetPairInfoByPair(pair string) (*types.Pair, error) {
 	return pairInfo, nil
 }
 
-func (p *PostgresDB) GetPairsWithToken(address string) ([]*types.Pair, error) {
+func (p *PostgresStore) GetPairsWithToken(address string) ([]*types.Pair, error) {
 	pairInfos := []*types.Pair{}
 	ctx := context.Background()
 	err := p.DB.NewSelect().Model(&pairInfos).Where("token0 = ? OR token1 = ?", address, address).Scan(ctx)
@@ -250,7 +250,7 @@ func (p *PostgresDB) GetPairsWithToken(address string) ([]*types.Pair, error) {
 	return pairInfos, nil
 }
 
-func (p *PostgresDB) InsertPairInfo(pairInfo *types.Pair) error {
+func (p *PostgresStore) InsertPairInfo(pairInfo *types.Pair) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(pairInfo).Exec(ctx)
 	if err != nil {
@@ -260,7 +260,7 @@ func (p *PostgresDB) InsertPairInfo(pairInfo *types.Pair) error {
 	return nil
 }
 
-func (p *PostgresDB) BulkInsertPairInfo(pairInfos []*types.Pair) error {
+func (p *PostgresStore) BulkInsertPairInfo(pairInfos []*types.Pair) error {
 	ctx := context.Background()
 	batchSize := 100000
 
@@ -281,7 +281,7 @@ func (p *PostgresDB) BulkInsertPairInfo(pairInfos []*types.Pair) error {
 	return nil
 }
 
-func (p *PostgresDB) GetPairCount() (int64, error) {
+func (p *PostgresStore) GetPairCount() (int64, error) {
 	var count int64
 	ctx := context.Background()
 	err := p.DB.NewSelect().ColumnExpr("COUNT(*)").Model(&types.Pair{}).Scan(ctx, &count)
@@ -292,7 +292,7 @@ func (p *PostgresDB) GetPairCount() (int64, error) {
 	return count, nil
 }
 
-func (p *PostgresDB) GetUniqueAddressesFromPairs() ([]string, error) {
+func (p *PostgresStore) GetUniqueAddressesFromPairs() ([]string, error) {
 	// Query to get distinct addresses from both token0 and token1
 	var addresses []string
 	ctx := context.Background()
@@ -320,7 +320,7 @@ func (p *PostgresDB) GetUniqueAddressesFromPairs() ([]string, error) {
 	return addresses, nil
 }
 
-func (p *PostgresDB) GetUniqueAddressesFromTokens() ([]string, error) {
+func (p *PostgresStore) GetUniqueAddressesFromTokens() ([]string, error) {
 	var addresses []string
 	ctx := context.Background()
 	err := p.DB.NewSelect().ColumnExpr("DISTINCT address").Scan(ctx, &addresses)
@@ -331,4 +331,4 @@ func (p *PostgresDB) GetUniqueAddressesFromTokens() ([]string, error) {
 	return addresses, nil
 }
 
-var _ Store = &PostgresDB{}
+var _ Store = &PostgresStore{}

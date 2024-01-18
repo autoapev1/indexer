@@ -54,7 +54,7 @@ func main() {
 
 }
 
-func IngestPairs(pg *storage.PostgresDB) error {
+func IngestPairs(pg *storage.PostgresStore) error {
 	data, err := adapter.ReadPairs("./adapter/data/eth.pairs.csv")
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func IngestPairs(pg *storage.PostgresDB) error {
 	return nil
 }
 
-func IngestTokens(pg *storage.PostgresDB) error {
+func IngestTokens(pg *storage.PostgresStore) error {
 	data, err := adapter.ReadTokens("./adapter/data/eth.tokens.csv")
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func IngestTokens(pg *storage.PostgresDB) error {
 	return nil
 }
 
-func IngestBlocks(pg *storage.PostgresDB) error {
+func IngestBlocks(pg *storage.PostgresStore) error {
 	data, err := adapter.ReadBlockTimestamps("./adapter/data/eth.timestamps.csv")
 	if err != nil {
 		return err
