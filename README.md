@@ -44,41 +44,83 @@ If the indexer is stopped for a while, it will need to catch up on the missed bl
 You will need to create a `config.toml` file in the root directory of the project. You can use [config.example.toml](config.example.toml) as a template.
 Here is an example config for a local setup:
 
-```toml
-ethNodeAddr = "http://127.0.0.1:8500"
-bscNodeAddr = "http://127.0.0.1:8400"
+```json
+{
+  // chain config
+  "chains": [
+    {
+      "chainID": 1,
+      "name": "Ethereum",
+      "shortName": "ETH",
+      "routerV2Address": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+      "factoryV2Address": "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95",
+      "routerV3Address": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "factoryV3Address": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+      "rpcURL": "http://localhost:8545"
+    },
+    {
+      "chainID": 56,
+      "name": "Binance Smart Chain",
+      "shortName": "BSC",
+      "routerV2Address": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+      "factoryV2Address": "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73",
+      "routerV3Address": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "factoryV3Address": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
+      "rpcURL": "http://localhost:8546"
+    }
+  ],
 
-[tokens]
-batchSize		  = 10
-batchConcurrency = 2
+  // api config
+  "api": {
+    // host address
+    "host": "localhost",
 
-[pairs]
-batchSize		 = 10
-batchConcurrency = 2
-blockRange		 = 200
+    // host port
+    "port": 8080,
 
-[storage]
-driver = "postgres"		# postgres (only supported for now)
+    // 90 days
+    "authDefaultExpirary": 7776000,
 
-[storage.postgres]
-user	 = "postgres"
-password = "postgres"
-host	 = "localhost"
-port	 = "5432"
-sslmode  = "disable"
+    // uuid | hex16 | hex32 | hex64 | hex128 | hex256 | jwt
+    "authKeyType": "hex64",
 
-[api]
-host = "localhost"
-port = 8080
+    // master key used for private API methods
+    "authMasterKey": "my-master-key",
 
-authProvider		= "sql"				# none / memory / sql
-authKeyType			= "hex64"			# uuid / hex16 / hex32 / hex64 / hex128 / hex256
-authDefaultExpirary = 7776000			 # 90 days in seconds
-authMasterKey		 = "my-master-key"   # used to generate other keys
+    // sql | noauth | memory
+    "authProvider": "sql",
 
-rateLimitStrategy = "ip"				 # ip / key / off
-rateLimitRequests = 500					# per second
+    // number of requests per minute
+    "rateLimitRequests": 500,
 
+    // ip | key
+    "rateLimitStrategy": "ip"
+  },
+
+  // sync config
+  "sync": {
+    "pairs": {
+      "batchConcurrency": 2,
+      "batchSize": 10,
+      "blockRange": 200
+    },
+    "tokens": {
+      "batchConcurrency": 2,
+      "batchSize": 10
+    }
+  },
+  // storage config
+  "storage": {
+    // currently only postgres is supported
+    "postgres": {
+      "host": "localhost",
+      "password": "postgres",
+      "port": "5432",
+      "sslmode": "disable",
+      "user": "postgres"
+    }
+  }
+}
 ```
 
 ### Running
