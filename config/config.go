@@ -8,39 +8,59 @@ import (
 )
 
 const defaultConfig = `
-ethNodeAddr = "http://127.0.0.1:8500"
-bscNodeAddr = "http://127.0.0.1:8400"
+[[chains]]
+chainID = 1
+name = "Ethereum"
+shortName = "ETH"
+explorerURL = "https://etherscan.io"
+routerV2Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+factoryV2Address = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
+routerV3Address = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+factoryV3Address = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+rpcURL = "http://localhost:8545"
 
-[tokens]
-batchSize 		 = 10
-batchConcurrency = 2
-
-[pairs]
-batchSize		 = 10
-batchConcurrency = 2
-blockRange		 = 200
-
-[storage]
-driver = "postgres"		# postgres (only supported for now)
-
-[storage.postgres]
-user	 = "postgres"
-password = "postgres"
-host	 = "localhost"
-port	 = "5432"
-sslmode  = "disable"
+[[chains]]
+chainID = 56
+name = "Binance Smart Chain"
+shortName = "BSC"
+explorerURL = "https://bscscan.com"
+routerV2Address = "0x10ED43C718714eb63d5aA57B78B54704E256024E"
+factoryV2Address = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
+routerV3Address = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+factoryV3Address = "0x6725F303b657a9451d8BA641348b6761A6CC7a17"
+rpcURL = "http://localhost:8546"
 
 [api]
 host = "localhost"
 port = 8080
+authDefaultExpirary = 7776000 # 90 days
+authKeyType = "hex64" # uuid | hex16 | hex32 | hex64 | hex128 | hex256 | jwt
+authMasterKey = "my-master-key" # key to access auth methods
+authProvider = "sql" # sql | memory | noauth
+rateLimitRequests = 500 # max requests per minute
+rateLimitStrategy = "ip" # ip | key (requires auth)
 
-authProvider	    = "sql"			    # none / memory / sql
-authKeyType		    = "hex64"		    # uuid / hex16 / hex32 / hex64 / hex128 / hex256
-authDefaultExpirary = 7776000 		    # 90 days in seconds
-authMasterKey 		= "my-master-key"   # used to generate other keys
+[sync.pairs]
+batchConcurrency = 2
+batchSize = 10
+blockRange = 200
 
-rateLimitStrategy = "ip" 			    # ip / key / off
-rateLimitRequests = 500				    # per second
+[sync.tokens]
+batchConcurrency = 2
+batchSize = 10
+
+[sync.blockTimestamps]
+batchConcurrency = 2
+batchSize = 10
+
+# currently only postgres is supported
+[storage.postgres]
+host = "localhost"
+password = "postgres"
+port = "5432"
+sslmode = "disable"
+user = "postgres"
+
 `
 
 func getDefaultConfig() Config {
@@ -57,32 +77,51 @@ func getDefaultConfig() Config {
 var config Config = getDefaultConfig()
 
 type Config struct {
-	EthNodeAddr string
-	BscNodeAddr string
+	Chains []ChainConfig
 
-	Tokens TokensConfig
-	Pairs  PairsConfig
+	Sync SyncConfig
 
 	Storage StorageConfig
-
-	Postgres PostgresConfig
 
 	API APIConfig
 }
 
-type TokensConfig struct {
+type ChainConfig struct {
+	ChainID          int
+	Name             string
+	ShortName        string
+	ExplorerURL      string
+	RouterV2Address  string
+	FactoryV2Address string
+	RouterV3Address  string
+	FactoryV3Address string
+	RPCURL           string
+}
+
+type SyncConfig struct {
+	Tokens          TokensSyncConfig
+	Pairs           PairsSyncConfig
+	BlockTimestamps BlockTimestampsSyncConfig
+}
+
+type BlockTimestampsSyncConfig struct {
 	BatchSize        int
 	BatchConcurrency int
 }
 
-type PairsConfig struct {
+type TokensSyncConfig struct {
+	BatchSize        int
+	BatchConcurrency int
+}
+
+type PairsSyncConfig struct {
 	BatchSize        int
 	BatchConcurrency int
 	BlockRange       int
 }
 
 type StorageConfig struct {
-	Driver string
+	Postgres PostgresConfig
 }
 
 type PostgresConfig struct {

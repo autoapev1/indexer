@@ -6,10 +6,10 @@ import (
 )
 
 func main() {
-	EthConfig := config.Get().Postgres
+	EthConfig := config.Get().Storage.Postgres
 	EthConfig.Name = "eth"
 
-	BscConfig := config.Get().Postgres
+	BscConfig := config.Get().Storage.Postgres
 	BscConfig.Name = "bsc"
 
 	edb := storage.NewPostgresDB(EthConfig)

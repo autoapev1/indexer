@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	conf := config.Get().Postgres
+	conf := config.Get().Storage.Postgres
 	conf.Name = "bsc"
 
 	db := storage.NewPostgresDB(conf)
