@@ -5,6 +5,27 @@ import (
 	"net/http"
 )
 
+type AuthProvider string
+
+const (
+	AuthProviderNoAuth AuthProvider = "noauth"
+	AuthProviderMemory AuthProvider = "memory"
+	AuthProviderSql    AuthProvider = "sql"
+)
+
+func ToProvider(s string) AuthProvider {
+	switch s {
+	case "noauth":
+		return AuthProviderNoAuth
+	case "memory":
+		return AuthProviderMemory
+	case "sql":
+		return AuthProviderSql
+	default:
+		return AuthProviderNoAuth
+	}
+}
+
 type Provider interface {
 	// Authenticate authenticates a request.
 	Authenticate(r *http.Request) error

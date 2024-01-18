@@ -19,7 +19,7 @@ type PostgresDB struct {
 	DB *bun.DB
 }
 
-func NewPostgresDB(conf config.Postgres) *PostgresDB {
+func NewPostgresDB(conf config.PostgresConfig) *PostgresDB {
 	PostgresDB := &PostgresDB{}
 	uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s", conf.User, conf.Password, conf.Host, conf.Name, conf.SSLMode)
 

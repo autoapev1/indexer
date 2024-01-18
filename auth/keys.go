@@ -28,6 +28,25 @@ const (
 	KeyTypeHex256String = "hex256"
 )
 
+func ToKeyType(s string) KeyType {
+	switch s {
+	case KeyTypeUUIDString:
+		return KeyTypeUUID
+	case KeyTypeHex16String:
+		return KeyTypeHex16
+	case KeyTypeHex32String:
+		return KeyTypeHex32
+	case KeyTypeHex64String:
+		return KeyTypeHex64
+	case KeyTypeHex128String:
+		return KeyTypeHex128
+	case KeyTypeHex256String:
+		return KeyTypeHex256
+	default:
+		return KeyTypeUUID
+	}
+}
+
 func GenerateKey(keyType KeyType) (string, error) {
 	switch keyType {
 	case KeyTypeUUID:
