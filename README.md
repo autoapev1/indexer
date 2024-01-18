@@ -49,7 +49,7 @@ ethNodeAddr = "http://127.0.0.1:8500"
 bscNodeAddr = "http://127.0.0.1:8400"
 
 [tokens]
-batchSize 		 = 10
+batchSize		  = 10
 batchConcurrency = 2
 
 [pairs]
@@ -71,13 +71,13 @@ sslmode  = "disable"
 host = "localhost"
 port = 8080
 
-authProvider	    = "sql"			    # none / memory / sql
-authKeyType		    = "hex64"		    # uuid / hex16 / hex32 / hex64 / hex128 / hex256
-authDefaultExpirary = 7776000 		    # 90 days in seconds
-authMasterKey 		= "my-master-key"   # used to generate other keys
+authProvider		= "sql"				# none / memory / sql
+authKeyType			= "hex64"			# uuid / hex16 / hex32 / hex64 / hex128 / hex256
+authDefaultExpirary = 7776000			 # 90 days in seconds
+authMasterKey		 = "my-master-key"   # used to generate other keys
 
-rateLimitStrategy = "ip" 			    # ip / key / off
-rateLimitRequests = 500				    # per second
+rateLimitStrategy = "ip"				 # ip / key / off
+rateLimitRequests = 500					# per second
 
 ```
 
