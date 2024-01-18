@@ -19,6 +19,15 @@ const (
 	KeyTypeHex256
 )
 
+const (
+	KeyTypeUUIDString   = "uuid"
+	KeyTypeHex16String  = "hex16"
+	KeyTypeHex32String  = "hex32"
+	KeyTypeHex64String  = "hex64"
+	KeyTypeHex128String = "hex128"
+	KeyTypeHex256String = "hex256"
+)
+
 func GenerateKey(keyType KeyType) (string, error) {
 	switch keyType {
 	case KeyTypeUUID:
@@ -45,4 +54,11 @@ func generateRandomHex(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+type KeyUsage struct {
+	IP          string
+	AccessedAt  int64
+	Requests    int64
+	MethodUsage map[string]int64
 }

@@ -9,7 +9,7 @@ type Provider interface {
 	// Authenticate authenticates a request.
 	Authenticate(r *http.Request) error
 	Register() (key string, err error)
-	UpdateUsage(key string, usageDelta *KeyUsage) error
+	UpdateUsage(key string, usageDelta KeyUsage) error
 }
 
 var (

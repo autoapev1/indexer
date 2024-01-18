@@ -16,7 +16,7 @@ func (a *NoAuth) Register() (string, error) {
 	return "", nil
 }
 
-func (a *NoAuth) UpdateUsage(key string, usageDelta *KeyUsage) error {
+func (a *NoAuth) UpdateUsage(key string, usageDelta KeyUsage) error {
 	return nil
 }
 
