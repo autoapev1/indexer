@@ -33,13 +33,25 @@ func main() {
 	authProviderType := auth.ToProvider(conf.API.AuthProvider)
 	var authProvider auth.Provider
 	switch authProviderType {
+
 	case auth.AuthProviderSql:
-		uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s", conf.User, conf.Password, conf.Host, conf.Name, conf.SSLMode)
+		uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s",
+			conf.Storage.Postgres.Host,
+			conf.Storage.Postgres.Password,
+			conf.Storage.Postgres.Host,
+			conf.Storage.Postgres.Name,
+			conf.Storage.Postgres.SSLMode)
 		db := auth.NewSqlDB(uri)
-		authProvider = auth.NewSqlAuth(db)
+		authProvider = auth.NewSqlAuthProvider(db)
 
 	case auth.AuthProviderMemory:
+
+		authProvider = auth.NewMemoryProvider()
+
 	case auth.AuthProviderNoAuth:
+
+		authProvider = auth.NewNoAuthProvider()
+
 	default:
 		slog.Warn("Invalid Auth Provider", "provider", authProviderType)
 	}

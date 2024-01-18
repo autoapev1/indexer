@@ -2,23 +2,23 @@ package auth
 
 import "net/http"
 
-type NoAuth struct{}
+type NoAuthProvider struct{}
 
-func NewNoAuth() *NoAuth {
-	return &NoAuth{}
+func NewNoAuthProvider() *NoAuthProvider {
+	return &NoAuthProvider{}
 }
 
-func (a *NoAuth) Authenticate(r *http.Request) error {
+func (a *NoAuthProvider) Authenticate(r *http.Request) error {
 	return nil
 }
 
-func (a *NoAuth) Register() (string, error) {
+func (a *NoAuthProvider) Register() (string, error) {
 	return "", nil
 }
 
-func (a *NoAuth) UpdateUsage(key string, usageDelta KeyUsage) error {
+func (a *NoAuthProvider) UpdateUsage(key string, usageDelta KeyUsage) error {
 	return nil
 }
 
 // ensure NoAuth implements Provider
-var _ Provider = (*NoAuth)(nil)
+var _ Provider = (*NoAuthProvider)(nil)

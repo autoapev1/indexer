@@ -17,7 +17,7 @@ func NewSqlDB(uri string) *bun.DB {
 	return bun.NewDB(pgdb, pgdialect.New())
 }
 
-type SqlAuth struct {
+type SqlAuthProvider struct {
 	db      *bun.DB
 	keyType KeyType
 }
@@ -41,8 +41,8 @@ type sqlMethodUsage struct {
 	UsageCount    int64                          `bun:"usage_count"`
 }
 
-func NewSqlAuth(db *bun.DB) *SqlAuth {
-	provider := &SqlAuth{
+func NewSqlAuthProvider(db *bun.DB) *SqlAuthProvider {
+	provider := &SqlAuthProvider{
 		db:      db,
 		keyType: KeyTypeHex64,
 	}
@@ -51,13 +51,13 @@ func NewSqlAuth(db *bun.DB) *SqlAuth {
 	return provider
 }
 
-func (a *SqlAuth) WithKeyType(keyType KeyType) *SqlAuth {
+func (a *SqlAuthProvider) WithKeyType(keyType KeyType) *SqlAuthProvider {
 	a.keyType = keyType
 	return a
 }
 
 // create table and index
-func (a *SqlAuth) initTables() {
+func (a *SqlAuthProvider) initTables() {
 	_, err := a.db.NewCreateTable().
 		Model((*sqlKey)(nil)).
 		IfNotExists().
@@ -78,7 +78,7 @@ func (a *SqlAuth) initTables() {
 
 }
 
-func (a *SqlAuth) Authenticate(r *http.Request) error {
+func (a *SqlAuthProvider) Authenticate(r *http.Request) error {
 	var sqlKey sqlKey
 
 	key := r.Header.Get("Authentication")
@@ -95,7 +95,7 @@ func (a *SqlAuth) Authenticate(r *http.Request) error {
 	return nil
 }
 
-func (a *SqlAuth) Register() (string, error) {
+func (a *SqlAuthProvider) Register() (string, error) {
 	key, err := GenerateKey(a.keyType)
 	if err != nil {
 		return "", err
@@ -115,7 +115,7 @@ func (a *SqlAuth) Register() (string, error) {
 
 	return key, nil
 }
-func (a *SqlAuth) UpdateUsage(key string, usageDelta KeyUsage) error {
+func (a *SqlAuthProvider) UpdateUsage(key string, usageDelta KeyUsage) error {
 	// Start a transaction
 	tx, err := a.db.Begin()
 	if err != nil {
@@ -177,4 +177,4 @@ func (a *SqlAuth) UpdateUsage(key string, usageDelta KeyUsage) error {
 	return tx.Commit()
 }
 
-var _ Provider = (*SqlAuth)(nil)
+var _ Provider = (*SqlAuthProvider)(nil)
