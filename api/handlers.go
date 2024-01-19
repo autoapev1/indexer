@@ -50,15 +50,15 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 
 	// tokens
 	case "idx_findTokens":
-		return notImplemented(r)
+		return s.findTokens(r)
 	case "idx_getTokenCount":
-		return notImplemented(r)
+		return s.getTokenCount(r)
 
 	// pairs
 	case "idx_findPairs":
-		return notImplemented(r)
+		return s.findPairs(r)
 	case "idx_getPairCount":
-		return notImplemented(r)
+		return s.getPairCount(r)
 
 	// holdings
 	case "idx_getWalletBalances":
@@ -67,7 +67,7 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 		return notImplemented(r)
 
 	// charts
-	case "idx_getOHLCVChartData":
+	case "idx_getOHLCVT":
 		return notImplemented(r)
 
 	case "auth_generateKey":
@@ -105,7 +105,6 @@ func notImplemented(r *JRPCRequest) *JRPCResponse {
 }
 
 func (s *Server) getBlockNumber(r *JRPCRequest) *types.GetBlockNumberResponse {
-
 	stores := s.stores.GetAll()
 	if stores == nil {
 		if s.debug {
@@ -148,7 +147,6 @@ func (s *Server) getBlockNumber(r *JRPCRequest) *types.GetBlockNumberResponse {
 }
 
 func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
-
 	chains := []types.Chain{}
 	for _, c := range s.config.Chains {
 		tc := types.Chain{
@@ -175,7 +173,7 @@ func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
 }
 
 func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsResponse {
-	req := &types.GetBlockTimestampsRequest{}
+	var req *types.GetBlockTimestampsRequest
 
 	err := json.Unmarshal(r.Params, req)
 	if err != nil {
@@ -213,7 +211,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 		}
 	}
 
-	blockTimestamps, err := store.BulkGetBlockTimestamp(req.ToBlock, req.FromBlock)
+	blockTimestamps, err := store.GetBlockTimestamps(req.ToBlock, req.FromBlock)
 	if err != nil {
 		if s.debug {
 			slog.Error("failed to get block timestamps", "err", err)
@@ -236,7 +234,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 }
 
 func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampResponse {
-	req := &types.GetBlockAtTimestampRequest{}
+	var req *types.GetBlockAtTimestampRequest
 
 	err := json.Unmarshal(r.Params, req)
 	if err != nil {
@@ -293,5 +291,250 @@ func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampR
 		ID:     r.ID,
 		Method: r.Method,
 		Result: block,
+	}
+}
+func (s *Server) findTokens(r *JRPCRequest) *types.FindTokensResponse {
+	var req *types.FindTokensRequest
+
+	err := json.Unmarshal(r.Params, &req)
+	if err != nil {
+		return &types.FindTokensResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.FindTokensResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.FindTokensResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	tokens, err := store.FindTokens(req)
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to find tokens", "err", err)
+		}
+
+		return &types.FindTokensResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.FindTokensResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: tokens,
+	}
+}
+
+func (s *Server) getTokenCount(r *JRPCRequest) *types.GetTokenCountResponse {
+	var req *types.GetTokenCountRequest
+
+	err := json.Unmarshal(r.Params, &req)
+	if err != nil {
+		return &types.GetTokenCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.GetTokenCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.GetTokenCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	count, err := store.GetTokenCount()
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to get token count", "err", err)
+		}
+		return &types.GetTokenCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.GetTokenCountResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: count,
+	}
+}
+
+func (s *Server) findPairs(r *JRPCRequest) *types.FindPairsResponse {
+	var req *types.FindPairsRequest
+
+	err := json.Unmarshal(r.Params, &req)
+	if err != nil {
+		return &types.FindPairsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.FindPairsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.FindPairsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	pairs, err := store.FindPairs(req)
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to find pairs", "err", err)
+		}
+
+		return &types.FindPairsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.FindPairsResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: pairs,
+	}
+}
+
+func (s *Server) getPairCount(r *JRPCRequest) *types.GetPairCountResponse {
+	var req types.GetPairCountRequest
+
+	err := json.Unmarshal(r.Params, &req)
+	if err != nil {
+		return &types.GetPairCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.GetPairCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.GetPairCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	count, err := store.GetPairCount()
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to get pair count", "err", err)
+		}
+		return &types.GetPairCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.GetPairCountResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: count,
 	}
 }

@@ -10,12 +10,12 @@ const (
 type TokenSortBy string
 
 const (
-	SortByAddress   TokenSortBy = "address"
-	SortByCreator   TokenSortBy = "creator"
-	SortByName      TokenSortBy = "name"
-	SortBySymbol    TokenSortBy = "symbol"
-	SortByDecimals  TokenSortBy = "decimals"
-	SortByCreatedAt TokenSortBy = "created_at"
+	TokenSortByAddress   TokenSortBy = "address"
+	TokenSortByCreator   TokenSortBy = "creator"
+	TokenSortByName      TokenSortBy = "name"
+	TokenSortBySymbol    TokenSortBy = "symbol"
+	TokenSortByDecimals  TokenSortBy = "decimals"
+	TokenSortByCreatedAt TokenSortBy = "created_at_block"
 )
 
 func ValidateSortOrder(order SortOrder) bool {
@@ -29,7 +29,7 @@ func ValidateSortOrder(order SortOrder) bool {
 
 func ValidateTokenSortBy(sortBy TokenSortBy) bool {
 	switch sortBy {
-	case SortByAddress, SortByCreator, SortByName, SortBySymbol, SortByDecimals, SortByCreatedAt:
+	case TokenSortByAddress, TokenSortByCreator, TokenSortByName, TokenSortBySymbol, TokenSortByDecimals, TokenSortByCreatedAt:
 		return true
 	default:
 		return false
@@ -46,19 +46,19 @@ type TokenOptions struct {
 type PairSortBy string
 
 const (
-	Token0Address PairSortBy = "token0_address"
-	Token1Address PairSortBy = "token1_address"
-	PoolAddress   PairSortBy = "pool_address"
-	Fee           PairSortBy = "fee"
-	TickSpacing   PairSortBy = "tick_spacing"
-	Hash          PairSortBy = "hash"
-	PoolType      PairSortBy = "pool_type"
-	CreatedAt     PairSortBy = "created_at"
+	PairSortByToken0Address PairSortBy = "token0_address"
+	PairSortByToken1Address PairSortBy = "token1_address"
+	PairSortByPoolAddress   PairSortBy = "pool_address"
+	PairSortByFee           PairSortBy = "fee"
+	PairSortByTickSpacing   PairSortBy = "tick_spacing"
+	PairSortByHash          PairSortBy = "hash"
+	PairSortByPoolType      PairSortBy = "pool_type"
+	PairSortByCreatedAt     PairSortBy = "created_at"
 )
 
 func ValidatePairSortBy(sortBy PairSortBy) bool {
 	switch sortBy {
-	case Token0Address, Token1Address, PoolAddress, Fee, TickSpacing, Hash, PoolType, CreatedAt:
+	case PairSortByToken0Address, PairSortByToken1Address, PairSortByPoolAddress, PairSortByFee, PairSortByTickSpacing, PairSortByHash, PairSortByPoolType, PairSortByCreatedAt:
 		return true
 	default:
 		return false

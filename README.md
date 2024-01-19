@@ -129,7 +129,7 @@ The available methods are:
 
 - `idx_getTokenHolders` - Get token holders for a token (WIP)
 
-- `idx_getOHLCVChartData` - Get OHLCV chart data for a pair (WIP)
+- `idx_getOHLCVT` - Get OHLCV chart data for a pair (WIP)
 
 ### Private API
 

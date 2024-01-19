@@ -16,9 +16,9 @@ type GetBlockAtTimestampRequest struct {
 }
 
 type FindTokensRequest struct {
-	ChainID int64        `json:"chain_id"`
-	Filter  TokenFilter  `json:"filter"`
-	Options TokenOptions `json:"options"`
+	ChainID int64         `json:"chain_id"`
+	Filter  *TokenFilter  `json:"filter,omitempty"`
+	Options *TokenOptions `json:"options,omitempty"`
 }
 
 type GetTokenCountRequest struct {
@@ -26,9 +26,9 @@ type GetTokenCountRequest struct {
 }
 
 type FindPairsRequest struct {
-	ChainID int64       `json:"chain_id"`
-	Filter  PairFilter  `json:"filter"`
-	Options PairOptions `json:"options"`
+	ChainID int64        `json:"chain_id"`
+	Filter  *PairFilter  `json:"filter,omitempty"`
+	Options *PairOptions `json:"options,omitempty"`
 }
 
 type GetPairCountRequest struct {

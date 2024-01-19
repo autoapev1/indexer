@@ -120,18 +120,6 @@ func (p *PostgresStore) GetChainID() int64 {
 	return p.ChainID
 }
 
-func (p *PostgresStore) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimestamp, error) {
-	blockTimestamp := new(types.BlockTimestamp)
-	ctx := context.Background()
-
-	err := p.DB.NewSelect().Model(blockTimestamp).Where("block = ?", blockNumber).Scan(ctx)
-	if err != nil {
-		return blockTimestamp, err
-	}
-
-	return blockTimestamp, nil
-}
-
 func (p *PostgresStore) GetBlockAtTimestamp(timestamp int64) (*types.BlockTimestamp, error) {
 	blockTimestamp := new(types.BlockTimestamp)
 	ctx := context.Background()
@@ -181,11 +169,10 @@ func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockT
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (p *PostgresStore) BulkGetBlockTimestamp(to int64, from int64) ([]*types.BlockTimestamp, error) {
+func (p *PostgresStore) GetBlockTimestamps(to int64, from int64) ([]*types.BlockTimestamp, error) {
 	var blockTimestamps []*types.BlockTimestamp
 	ctx := context.Background()
 
@@ -211,17 +198,6 @@ func (p *PostgresStore) GetHight() (int64, error) {
 	}
 
 	return block, nil
-}
-
-func (p *PostgresStore) GetTokenInfo(address string) (*types.Token, error) {
-	tokenInfo := new(types.Token)
-	ctx := context.Background()
-	err := p.DB.NewSelect().Model(tokenInfo).Where("address = ?", address).Scan(ctx)
-	if err != nil {
-		return tokenInfo, err
-	}
-
-	return tokenInfo, nil
 }
 
 func (p *PostgresStore) InsertTokenInfo(tokenInfo *types.Token) error {
@@ -265,26 +241,83 @@ func (p *PostgresStore) GetTokenCount() (int64, error) {
 	return count, nil
 }
 
-func (p *PostgresStore) GetPairInfoByPair(pair string) (*types.Pair, error) {
-	pairInfo := new(types.Pair)
-	ctx := context.Background()
-	err := p.DB.NewSelect().Model(pairInfo).Where("pool_address = ?", pair).Scan(ctx)
-	if err != nil {
-		return pairInfo, err
+func (p *PostgresStore) FindTokens(req *types.FindTokensRequest) ([]*types.Token, error) {
+	var tokens []*types.Token
+
+	query := p.DB.NewSelect().Model(&tokens)
+	filter := req.Filter
+
+	if filter.Fuzzy {
+		if filter.Address != nil {
+			query.Where("address ILIKE ?", filter.Address)
+		}
+		if filter.Creator != nil {
+			query.Where("creator ILIKE ?", filter.Creator)
+		}
+
+		if filter.Name != nil {
+			query.Where("name ILIKE ?", filter.Name)
+		}
+
+		if filter.Symbol != nil {
+			query.Where("symbol ILIKE ?", filter.Symbol)
+		}
+	} else {
+		if filter.Address != nil {
+			query.Where("address = ?", filter.Address)
+		}
+		if filter.Creator != nil {
+			query.Where("creator = ?", filter.Creator)
+		}
+
+		if filter.Name != nil {
+			query.Where("name = ?", filter.Name)
+		}
+
+		if filter.Symbol != nil {
+			query.Where("symbol = ?", filter.Symbol)
+		}
 	}
 
-	return pairInfo, nil
-}
-
-func (p *PostgresStore) GetPairsWithToken(address string) ([]*types.Pair, error) {
-	var pairInfos []*types.Pair
-	ctx := context.Background()
-	err := p.DB.NewSelect().Model(&pairInfos).Where("token0_address = ? OR token1_address = ?", address, address).Scan(ctx)
-	if err != nil {
-		return pairInfos, err
+	if filter.Decimals != nil {
+		query.Where("decimals = ?", filter.Decimals)
 	}
 
-	return pairInfos, nil
+	if filter.FromBlock != nil {
+		query.Where("created_at_block >= ?", filter.FromBlock)
+	}
+
+	if filter.ToBlock != nil {
+		query.Where("created_at_block <= ?", filter.ToBlock)
+	}
+
+	if req.Options.SortOrder != "" && req.Options.SortBy != "" {
+		query.OrderExpr(fmt.Sprintf("%s %s", req.Options.SortBy, req.Options.SortOrder))
+	} else {
+		query.OrderExpr("created_at_block ASC")
+	}
+
+	if req.Options.Limit != 0 {
+		query.Limit(int(req.Options.Limit))
+	} else {
+		query.Limit(1000)
+	}
+
+	if req.Options.Offset != 0 {
+		query.Offset(int(req.Options.Offset))
+	} else {
+		query.Offset(0)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	err := query.Scan(ctx)
+	if err != nil {
+		return tokens, err
+	}
+
+	return tokens, nil
 }
 
 func (p *PostgresStore) InsertPairInfo(pairInfo *types.Pair) error {
@@ -327,6 +360,90 @@ func (p *PostgresStore) GetPairCount() (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (p *PostgresStore) FindPairs(req *types.FindPairsRequest) ([]*types.Pair, error) {
+	var pairs []*types.Pair
+
+	query := p.DB.NewSelect().Model(&pairs)
+	filter := req.Filter
+
+	if filter.Fuzzy {
+		if filter.Token0Address != nil {
+			query.Where("token0_address ILIKE ?", filter.Token0Address)
+		}
+		if filter.Token1Address != nil {
+			query.Where("token1_address ILIKE ?", filter.Token1Address)
+		}
+		if filter.PoolAddress != nil {
+			query.Where("pool_address ILIKE ?", filter.PoolAddress)
+		}
+		if filter.Hash != nil {
+			query.Where("hash ILIKE ?", filter.Hash)
+		}
+
+	} else {
+		if filter.Token0Address != nil {
+			query.Where("token0_address = ?", filter.Token0Address)
+		}
+		if filter.Token1Address != nil {
+			query.Where("token1_address = ?", filter.Token1Address)
+		}
+		if filter.PoolAddress != nil {
+			query.Where("pool_address = ?", filter.PoolAddress)
+		}
+		if filter.Hash != nil {
+			query.Where("hash = ?", filter.Hash)
+		}
+	}
+
+	if filter.FromBlock != nil {
+		query.Where("created_at_block >= ?", filter.FromBlock)
+	}
+
+	if filter.ToBlock != nil {
+		query.Where("created_at_block <= ?", filter.ToBlock)
+	}
+
+	if filter.Fee != nil {
+		query.Where("fee = ?", filter.Fee)
+	}
+
+	if filter.TickSpacing != nil {
+		query.Where("tick_spacing = ?", filter.TickSpacing)
+	}
+
+	if filter.PoolType != nil {
+		query.Where("pool_type = ?", filter.PoolType)
+	}
+
+	if req.Options.SortOrder != "" && req.Options.SortBy != "" {
+		query.OrderExpr(fmt.Sprintf("%s %s", req.Options.SortBy, req.Options.SortOrder))
+	} else {
+		query.OrderExpr("created_at_block ASC")
+	}
+
+	if req.Options.Limit != 0 {
+		query.Limit(int(req.Options.Limit))
+	} else {
+		query.Limit(1000)
+	}
+
+	if req.Options.Offset != 0 {
+		query.Offset(int(req.Options.Offset))
+	} else {
+		query.Offset(0)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	err := query.Scan(ctx)
+	if err != nil {
+		return pairs, err
+	}
+
+	return pairs, nil
 }
 
 func (p *PostgresStore) GetUniqueAddressesFromPairs() ([]string, error) {
