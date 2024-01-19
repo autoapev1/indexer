@@ -18,13 +18,7 @@ func authMiddleware(a auth.Provider) func(next http.Handler) http.Handler {
 
 			level, err := a.Authenticate(r)
 			if err != nil {
-				writeJSON(w, http.StatusUnauthorized, &JRPCResponse{
-					JSONRPC: "2.0",
-					Error: &JRPCError{
-						Code:    -32800,
-						Message: "Unauthorized",
-					},
-				})
+				writeError(w, http.StatusUnauthorized, err)
 				return
 			}
 

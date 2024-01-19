@@ -43,7 +43,7 @@ func main() {
 		storeMap.SetStore(int64(v.ChainID), db)
 	}
 
-	server := api.NewServer(conf.Chains, storeMap)
+	server := api.NewServer(conf, storeMap)
 
 	log.Fatal(server.Listen(utils.ToAddress(conf.API.Host, conf.API.Port)))
 }

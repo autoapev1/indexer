@@ -11,6 +11,7 @@ var (
 	errInternalServer   = errors.New("internal server error")
 	errUnmarshalRequest = errors.New("failed to unmarshal request")
 	errReadingBody      = errors.New("failed to read request body")
+	errMissingAuth      = errors.New("missing Authentication header")
 )
 
 type apiHandler func(w http.ResponseWriter, r *http.Request) error

@@ -92,7 +92,6 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) *JRPC
 			},
 		}
 	}
-	return nil
 }
 
 func notImplemented(r *JRPCRequest) *JRPCResponse {

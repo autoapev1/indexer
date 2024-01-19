@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/autoapev1/indexer/auth"
 	"github.com/autoapev1/indexer/config"
@@ -15,16 +16,17 @@ import (
 )
 
 type Server struct {
-	router *chi.Mux
-	chains []config.ChainConfig
-	stores *storage.StoreMap
-	auth   auth.Provider
+	router    *chi.Mux
+	config    config.Config
+	stores    *storage.StoreMap
+	auth      auth.Provider
+	rateLimit *rateLimiter
 }
 
 // NewServer returns a new server given a Store interface.
-func NewServer(chains []config.ChainConfig, stores *storage.StoreMap) *Server {
+func NewServer(conf config.Config, stores *storage.StoreMap) *Server {
 	return &Server{
-		chains: chains,
+		config: conf,
 		stores: stores,
 	}
 }
@@ -61,10 +63,27 @@ func (s *Server) initAuthProvider() error {
 	return nil
 }
 
+func (s *Server) initRateLimiter() error {
+	conf := config.Get()
+
+	if conf.API.RateLimitRequests <= 0 {
+		slog.Warn("Rate limit requests is not set, rate limiting will be disabled")
+	}
+
+	lifetime := time.Minute
+	rLimiter := NewRateLimiter(conf.API.RateLimitRequests, lifetime)
+	s.rateLimit = rLimiter
+	return nil
+}
+
 // Listen starts listening on the given address.
 func (s *Server) Listen(addr string) error {
 
 	if err := s.initAuthProvider(); err != nil {
+		return err
+	}
+
+	if err := s.initRateLimiter(); err != nil {
 		return err
 	}
 
@@ -80,8 +99,9 @@ func (s *Server) initRouter() {
 	// middleware
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.Logger)
-	s.router.Use(authMiddleware(s.auth))
 	s.router.Use(middleware.RealIP)
+	s.router.Use(authMiddleware(s.auth))
+	s.router.Use(s.rateLimitMiddleware(s.config.API.RateLimitRequests, s.config.API.RateLimitStrategy))
 
 	// routes
 	s.router.Get("/", makeAPIHandler(s.handleRequest))
