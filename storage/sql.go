@@ -248,18 +248,18 @@ func (p *PostgresStore) FindTokens(req *types.FindTokensRequest) ([]*types.Token
 	filter := req.Filter
 
 	if filter.Fuzzy {
-		if filter.Address != nil {
+		if filter.Address != nil && *filter.Address != "" {
 			query.Where("address ILIKE ?", fuzWrap(filter.Address))
 		}
-		if filter.Creator != nil {
+		if filter.Creator != nil && *filter.Creator != "" {
 			query.Where("creator ILIKE ?", fuzWrap(filter.Creator))
 		}
 
-		if filter.Name != nil {
+		if filter.Name != nil && *filter.Name != "" {
 			query.Where("name ILIKE ?", fuzWrap(filter.Name))
 		}
 
-		if filter.Symbol != nil {
+		if filter.Symbol != nil && *filter.Symbol != "" {
 			query.Where("symbol ILIKE ?", fuzWrap(filter.Symbol))
 		}
 	} else {
@@ -369,16 +369,16 @@ func (p *PostgresStore) FindPairs(req *types.FindPairsRequest) ([]*types.Pair, e
 	filter := req.Filter
 
 	if filter.Fuzzy {
-		if filter.Token0Address != nil {
+		if filter.Token0Address != nil && *filter.Token0Address != "" {
 			query.Where("token0_address ILIKE ?", fuzWrap(filter.Token0Address))
 		}
-		if filter.Token1Address != nil {
+		if filter.Token1Address != nil && *filter.Token1Address != "" {
 			query.Where("token1_address ILIKE ?", fuzWrap(filter.Token1Address))
 		}
-		if filter.PoolAddress != nil {
+		if filter.PoolAddress != nil && *filter.PoolAddress != "" {
 			query.Where("pool_address ILIKE ?", fuzWrap(filter.PoolAddress))
 		}
-		if filter.Hash != nil {
+		if filter.Hash != nil && *filter.Hash != "" {
 			query.Where("hash ILIKE ?", fuzWrap(filter.Hash))
 		}
 
