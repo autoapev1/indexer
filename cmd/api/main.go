@@ -40,6 +40,10 @@ func main() {
 
 		c.Name = v.ShortName
 		db := storage.NewPostgresDB(c).WithChainID(int64(v.ChainID))
+		err := db.Init()
+		if err != nil {
+			log.Fatal(err)
+		}
 		storeMap.SetStore(int64(v.ChainID), db)
 	}
 

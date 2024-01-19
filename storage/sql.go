@@ -94,7 +94,6 @@ func (p *PostgresStore) CreateIndexes() {
 	defer cancel()
 
 	_, _ = p.DB.NewCreateIndex().
-		Concurrently().
 		Model(&types.BlockTimestamp{}).
 		Column("block").
 		Column("timestamp").
@@ -137,8 +136,11 @@ func (p *PostgresStore) GetBlockAtTimestamp(timestamp int64) (*types.BlockTimest
 	blockTimestamp := new(types.BlockTimestamp)
 	ctx := context.Background()
 
+	const rangeOffset int64 = 20
+
 	err := p.DB.NewSelect().
 		Model(blockTimestamp).
+		Where("timestamp BETWEEN ? AND ?", timestamp-rangeOffset, timestamp+rangeOffset).
 		OrderExpr("ABS(timestamp - ?)", timestamp).
 		Limit(1).
 		Scan(ctx)

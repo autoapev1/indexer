@@ -294,5 +294,4 @@ func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampR
 		Method: r.Method,
 		Result: block,
 	}
-
 }
