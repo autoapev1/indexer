@@ -65,23 +65,23 @@ user = "postgres"
 
 `
 
-func getDefaultConfig() Config {
-	// parse default config
-	var config Config
-	err := toml.Unmarshal([]byte(defaultConfig), &config)
-	if err != nil {
-		panic(err)
-	}
+// func getDefaultConfig() Config {
+// 	// parse default config
+// 	var config Config
+// 	err := toml.Unmarshal([]byte(defaultConfig), &config)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	// fmt.Printf("Chains: %+v\n", config.Chains)
-	// fmt.Printf("Sync: %+v\n", config.Sync)
-	// fmt.Printf("Storage: %+v\n", config.Storage)
-	// fmt.Printf("API: %+v\n", config.API)
-	return config
-}
+// 	fmt.Printf("Chains: %+v\n", config.Chains)
+// 	// fmt.Printf("Sync: %+v\n", config.Sync)
+// 	// fmt.Printf("Storage: %+v\n", config.Storage)
+// 	// fmt.Printf("API: %+v\n", config.API)
+// 	return config
+// }
 
 // Config has global config
-var config Config = getDefaultConfig()
+var config Config
 
 type Config struct {
 	Chains []ChainConfig

@@ -1,9 +1,8 @@
 package api
 
 import (
-	"encoding/json"
+	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/autoapev1/indexer/auth"
 	"github.com/autoapev1/indexer/types"
@@ -40,7 +39,7 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 	case "idx_getBlockNumber":
 		return s.getBlockNumber(r)
 	case "idx_getChains":
-		return notImplemented(r)
+		return s.getChains(r)
 
 	// block timestamps
 	case "idx_getBlockTimestamps":
@@ -143,23 +142,12 @@ func (s *Server) getBlockNumber(r *JRPCRequest) *types.GetBlockNumberResponse {
 	return &types.GetBlockNumberResponse{
 		ID:     r.ID,
 		Method: r.Method,
-		Result: nil,
+		Result: blockNumbers,
 	}
 }
 
 func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
-	req := &types.GetChainsRequest{}
 
-	if err := json.Unmarshal(r.Params, req); err != nil {
-		return &types.GetChainsResponse{
-			ID:     r.ID,
-			Method: r.Method,
-			Error: &types.JRPCError{
-				Code:    -32602,
-				Message: "Invalid params",
-			},
-		}
-	}
 	chains := []types.Chain{}
 	for _, c := range s.config.Chains {
 		tc := types.Chain{
@@ -171,10 +159,12 @@ func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
 			FactoryV2:     c.FactoryV2Address,
 			RouterV3:      c.RouterV3Address,
 			FactoryV3:     c.FactoryV3Address,
-			BlockDuration: time.Duration(c.BlockDuration) * time.Second,
+			BlockDuration: int64(c.BlockDuration),
 		}
 		chains = append(chains, tc)
 	}
+
+	fmt.Println(len(s.config.Chains))
 
 	return &types.GetChainsResponse{
 		ID:     r.ID,

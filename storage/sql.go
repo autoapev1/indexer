@@ -180,7 +180,7 @@ func (p *PostgresStore) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockT
 func (p *PostgresStore) GetHight() (int64, error) {
 	var block int64
 	ctx := context.Background()
-	err := p.DB.NewSelect().ColumnExpr("MAX(block)").Scan(ctx, &block)
+	err := p.DB.NewSelect().Model(&types.BlockTimestamp{}).ColumnExpr("MAX(block)").Scan(ctx, &block)
 	if err != nil {
 		return block, err
 	}
