@@ -28,12 +28,13 @@ func ToProvider(s string) AuthProvider {
 
 type Provider interface {
 	// Authenticate authenticates a request.
-	Authenticate(r *http.Request) error
+	Authenticate(r *http.Request) (AuthLevel, error)
 	Register() (key string, err error)
 	UpdateUsage(key string, usageDelta KeyUsage) error
 }
 
 var (
+	ErrCheckingAuth = errors.New("unable to check auth")
 	ErrUnauthorized = errors.New("unauthorized")
 	ErrInvalidKey   = errors.New("invalid key")
 )

@@ -1,11 +1,12 @@
 build:
 	@echo "Building..."
+	@go build -o ./bin/api ./cmd/api/main.go
 	@go build -o ./bin/test ./cmd/test/main.go
 	@go build -o ./bin/ingest-eth ./cmd/ingest/eth/main.go
 	@go build -o ./bin/ingest-bsc ./cmd/ingest/bsc/main.go
 
 run: build
-	@./bin/test
+	@./bin/api
 
 ingest-eth: build
 	@./bin/ingest-eth

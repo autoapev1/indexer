@@ -1,17 +1,30 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/autoapev1/indexer/api"
-	"github.com/autoapev1/indexer/auth"
 	"github.com/autoapev1/indexer/config"
 	"github.com/autoapev1/indexer/storage"
+	"github.com/autoapev1/indexer/utils"
 )
 
 func main() {
+	var (
+		configFile string
+	)
+	flagSet := flag.NewFlagSet("indexer", flag.ExitOnError)
+	flagSet.StringVar(&configFile, "config", "config.toml", "")
+	flagSet.Parse(os.Args[1:])
+
+	err := config.Parse(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	conf := config.Get()
 	_ = conf
 
@@ -30,33 +43,7 @@ func main() {
 		storeMap.SetStore(int64(v.ChainID), db)
 	}
 
-	authProviderType := auth.ToProvider(conf.API.AuthProvider)
-	var authProvider auth.Provider
-	switch authProviderType {
+	server := api.NewServer(conf.Chains, storeMap)
 
-	case auth.AuthProviderSql:
-		uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s",
-			conf.Storage.Postgres.Host,
-			conf.Storage.Postgres.Password,
-			conf.Storage.Postgres.Host,
-			conf.Storage.Postgres.Name,
-			conf.Storage.Postgres.SSLMode)
-		db := auth.NewSqlDB(uri)
-		authProvider = auth.NewSqlAuthProvider(db)
-
-	case auth.AuthProviderMemory:
-
-		authProvider = auth.NewMemoryProvider()
-
-	case auth.AuthProviderNoAuth:
-
-		authProvider = auth.NewNoAuthProvider()
-
-	default:
-		slog.Warn("Invalid Auth Provider", "provider", authProviderType)
-	}
-
-	server := api.NewServer(conf.Chains, storeMap).WithAuthProvider(authProvider)
-
-	log.Fatal(server.Listen(conf.API.Host))
+	log.Fatal(server.Listen(utils.ToAddress(conf.API.Host, conf.API.Port)))
 }

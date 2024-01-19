@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/autoapev1/indexer/auth"
@@ -26,14 +28,48 @@ func NewServer(chains []config.ChainConfig, stores *storage.StoreMap) *Server {
 	}
 }
 
-func (s *Server) WithAuthProvider(ap auth.Provider) *Server {
-	s.auth = ap
-	return s
+func (s *Server) initAuthProvider() error {
+	conf := config.Get()
+	authProviderType := auth.ToProvider(conf.API.AuthProvider)
+	var authProvider auth.Provider
+	switch authProviderType {
+
+	case auth.AuthProviderSql:
+		uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s",
+			conf.Storage.Postgres.User,
+			conf.Storage.Postgres.Password,
+			conf.Storage.Postgres.Host,
+			conf.Storage.Postgres.Name,
+			conf.Storage.Postgres.SSLMode)
+		db := auth.NewSqlDB(uri)
+		authProvider = auth.NewSqlAuthProvider(db)
+
+	case auth.AuthProviderMemory:
+
+		authProvider = auth.NewMemoryProvider()
+
+	case auth.AuthProviderNoAuth:
+
+		authProvider = auth.NewNoAuthProvider()
+
+	default:
+		slog.Warn("Invalid Auth Provider", "provider", authProviderType)
+	}
+
+	s.auth = authProvider
+	return nil
 }
 
 // Listen starts listening on the given address.
 func (s *Server) Listen(addr string) error {
+
+	if err := s.initAuthProvider(); err != nil {
+		return err
+	}
+
 	s.initRouter()
+
+	fmt.Printf("API Server Listening on: \t%s", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
@@ -43,6 +79,7 @@ func (s *Server) initRouter() {
 	// middleware
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.Logger)
+	s.router.Use(AuthMiddleware(s.auth))
 	s.router.Use(middleware.RealIP)
 
 	// routes

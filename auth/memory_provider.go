@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/autoapev1/indexer/config"
 	"github.com/savsgio/gotils/nocopy"
 )
 
@@ -54,18 +55,24 @@ func (a *MemoryProvider) WithDefaultExpiry(defaultExpiry time.Duration) *MemoryP
 	return a
 }
 
-func (a *MemoryProvider) Authenticate(r *http.Request) error {
+func (a *MemoryProvider) Authenticate(r *http.Request) (AuthLevel, error) {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
 	key := r.Header.Get("Authentication")
 	key = strings.TrimPrefix(key, "Bearer ")
 
-	if _, ok := a.Keys[key]; !ok {
-		return ErrUnauthorized
+	// check master
+	master := config.Get().API.AuthMasterKey
+	if master != "" && key == master {
+		return AuthLevelMaster, nil
 	}
 
-	return nil
+	if _, ok := a.Keys[key]; !ok {
+		return AuthLevelUnauthorized, ErrUnauthorized
+	}
+
+	return AuthLevelAccess, nil
 }
 
 func (a *MemoryProvider) Register() (string, error) {

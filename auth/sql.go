@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/autoapev1/indexer/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -78,21 +79,30 @@ func (a *SqlAuthProvider) initTables() {
 
 }
 
-func (a *SqlAuthProvider) Authenticate(r *http.Request) error {
+func (a *SqlAuthProvider) Authenticate(r *http.Request) (AuthLevel, error) {
 	var sqlKey sqlKey
 
+	// get key from request
 	key := r.Header.Get("Authentication")
 	key = strings.TrimPrefix(key, "Bearer ")
 
+	// check master
+	master := config.Get().API.AuthMasterKey
+	if master != "" && key == master {
+		return AuthLevelMaster, nil
+	}
+
+	// search db for key
 	err := a.db.NewSelect().
 		Model(&sqlKey).
 		Where("key = ?", key).
 		Scan(context.Background())
+
 	if err != nil {
-		return ErrUnauthorized
+		return AuthLevelUnauthorized, ErrCheckingAuth
 	}
 
-	return nil
+	return AuthLevelAccess, nil
 }
 
 func (a *SqlAuthProvider) Register() (string, error) {

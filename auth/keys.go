@@ -4,10 +4,26 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
 
+// context key for middleware
+type CtxAuthKey int
+
+const AuthKey CtxAuthKey = 0
+
+// auth levels
+type AuthLevel int
+
+const (
+	AuthLevelUnauthorized AuthLevel = iota
+	AuthLevelAccess
+	AuthLevelMaster
+)
+
+// key types
 type KeyType int
 
 const (
@@ -19,6 +35,7 @@ const (
 	KeyTypeHex256
 )
 
+// string key types
 const (
 	KeyTypeUUIDString   = "uuid"
 	KeyTypeHex16String  = "hex16"
@@ -28,6 +45,7 @@ const (
 	KeyTypeHex256String = "hex256"
 )
 
+// take string of key type to int KeyType
 func ToKeyType(s string) KeyType {
 	switch s {
 	case KeyTypeUUIDString:
@@ -43,7 +61,8 @@ func ToKeyType(s string) KeyType {
 	case KeyTypeHex256String:
 		return KeyTypeHex256
 	default:
-		return KeyTypeUUID
+		slog.Warn("invalid key type", "KeyType", s)
+		return KeyTypeHex64
 	}
 }
 

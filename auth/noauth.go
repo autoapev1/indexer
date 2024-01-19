@@ -8,8 +8,9 @@ func NewNoAuthProvider() *NoAuthProvider {
 	return &NoAuthProvider{}
 }
 
-func (a *NoAuthProvider) Authenticate(r *http.Request) error {
-	return nil
+// with no auth, highest auth level is defualt
+func (a *NoAuthProvider) Authenticate(r *http.Request) (AuthLevel, error) {
+	return AuthLevelMaster, nil
 }
 
 func (a *NoAuthProvider) Register() (string, error) {

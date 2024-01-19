@@ -70,6 +70,11 @@ func getDefaultConfig() Config {
 	if err != nil {
 		panic(err)
 	}
+
+	// fmt.Printf("Chains: %+v\n", config.Chains)
+	// fmt.Printf("Sync: %+v\n", config.Sync)
+	// fmt.Printf("Storage: %+v\n", config.Storage)
+	// fmt.Printf("API: %+v\n", config.API)
 	return config
 }
 
@@ -155,6 +160,7 @@ func Parse(path string) error {
 	if err != nil {
 		return err
 	}
+
 	err = toml.Unmarshal(b, &config)
 	return err
 }

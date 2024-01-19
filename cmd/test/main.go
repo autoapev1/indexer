@@ -26,4 +26,18 @@ func main() {
 		panic(err)
 	}
 
+	// type cat struct {
+	// 	wiskars int
+	// }
+
+	// count := func(cat *cat) int {
+	// 	return cat.wiskars
+	// }
+
+	// myCat := cat{
+	// 	wiskars: 10,
+	// }
+
+	// fmt.Println(count(&myCat))
+
 }

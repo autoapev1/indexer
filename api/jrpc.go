@@ -10,10 +10,10 @@ type JRPCRequest struct {
 }
 
 type JRPCResponse struct {
-	ID      int64           `json:"id"`
-	JSONRPC string          `json:"jsonrpc"`
-	Result  json.RawMessage `json:"result"`
-	Error   *JRPCError      `json:"error"`
+	ID      int64           `json:"id,omitempty"`
+	JSONRPC string          `json:"jsonrpc,omitempty"`
+	Result  json.RawMessage `json:"result,omitempty"`
+	Error   *JRPCError      `json:"error,omitempty"`
 }
 
 type JRPCError struct {
