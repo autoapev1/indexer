@@ -8,7 +8,7 @@ import (
 	"github.com/autoapev1/indexer/auth"
 )
 
-func AuthMiddleware(a auth.Provider) func(next http.Handler) http.Handler {
+func authMiddleware(a auth.Provider) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if a == nil {

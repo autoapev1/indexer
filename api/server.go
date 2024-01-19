@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -79,11 +80,11 @@ func (s *Server) initRouter() {
 	// middleware
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.Logger)
-	s.router.Use(AuthMiddleware(s.auth))
+	s.router.Use(authMiddleware(s.auth))
 	s.router.Use(middleware.RealIP)
 
 	// routes
-	s.router.Get("/", makeAPIHandler(s.handleBase))
+	s.router.Get("/", makeAPIHandler(s.handleRequest))
 	s.router.Get("/status", handleStatus)
 
 }
@@ -98,15 +99,24 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // main request handler func
-func (s *Server) handleBase(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) error {
 	var req []*JRPCRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return writeJSON(w, http.StatusBadRequest, &JRPCResponse{
-			Error: &JRPCError{
-				Code:    -32600,
-				Message: err.Error(),
-			},
-		})
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return writeError(w, http.StatusBadRequest, errReadingBody)
+	}
+
+	if len(body) == 0 {
+		// Return a blank HTML page
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("<html><body></body></html>"))
+		return nil
+	}
+
+	if err := json.Unmarshal(body, &req); err != nil {
+		return writeError(w, http.StatusBadRequest, errUnmarshalRequest)
 	}
 
 	authLevel := r.Context().Value(auth.AuthKey).(auth.AuthLevel)

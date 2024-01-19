@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	errUnauthorized   = errors.New("unauthorized")
-	errInternalServer = errors.New("internal server error")
+	errInternalServer   = errors.New("internal server error")
+	errUnmarshalRequest = errors.New("failed to unmarshal request")
+	errReadingBody      = errors.New("failed to read request body")
 )
 
 type apiHandler func(w http.ResponseWriter, r *http.Request) error
@@ -19,18 +20,18 @@ func makeAPIHandler(h apiHandler) http.HandlerFunc {
 		defer func() {
 			if rec := recover(); rec != nil {
 				slog.Error("panic in api handler", "error", rec)
-				writeError(w, errInternalServer)
+				writeError(w, http.StatusInternalServerError, errInternalServer)
 			}
 		}()
 
 		if err := h(w, r); err != nil {
 			slog.Error("api handler error", "err", err)
-			writeError(w, errInternalServer)
+			writeError(w, http.StatusInternalServerError, errInternalServer)
 		}
 	}
 }
 
-func writeError(w http.ResponseWriter, err error) error {
+func writeError(w http.ResponseWriter, code int, err error) error {
 	return writeJSON(w, http.StatusInternalServerError, &JRPCResponse{
 		Error: &JRPCError{
 			Code:    -32603,
