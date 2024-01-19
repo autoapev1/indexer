@@ -33,3 +33,19 @@ func (r *GetBlockTimestampsRequest) Validate() error {
 
 	return nil
 }
+
+func (r *GetBlockAtTimestampRequest) Validate() error {
+	if r == nil {
+		return errors.New("GetBlockAtTimestampRequest is nil")
+	}
+
+	if r.ChainID == 0 {
+		return errors.New("chain_id is required")
+	}
+
+	if r.Timestamp <= 0 {
+		return errors.New("timestamp must be greater than 0")
+	}
+
+	return nil
+}

@@ -27,10 +27,10 @@ type GetBlockTimestampsResponse struct {
 }
 
 type GetBlockAtTimestampResponse struct {
-	ID     string     `json:"id"`
-	Method string     `json:"method"`
-	Result int64      `json:"result,omitempty"`
-	Error  *JRPCError `json:"error,omitempty"`
+	ID     string          `json:"id"`
+	Method string          `json:"method"`
+	Result *BlockTimestamp `json:"result,omitempty"`
+	Error  *JRPCError      `json:"error,omitempty"`
 }
 
 type FindTokensResponse struct {

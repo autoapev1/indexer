@@ -7,6 +7,7 @@ type Store interface {
 
 	// block timestamp
 	GetTimestampAtBlock(int64) (*types.BlockTimestamp, error)
+	GetBlockAtTimestamp(int64) (*types.BlockTimestamp, error)
 	GetHight() (int64, error)
 	InsertBlockTimestamp(*types.BlockTimestamp) error
 	BulkInsertBlockTimestamp([]*types.BlockTimestamp) error

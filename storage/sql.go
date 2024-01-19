@@ -13,6 +13,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
 type PostgresStore struct {
@@ -31,7 +32,7 @@ func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
 	db := bun.NewDB(pgdb, pgdialect.New())
 	PostgresDB.DB = db
 
-	//db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	//db.SetConnMaxIdleTime(30 * time.Second)
 
 	return PostgresDB
@@ -132,6 +133,22 @@ func (p *PostgresStore) GetTimestampAtBlock(blockNumber int64) (*types.BlockTime
 	return blockTimestamp, nil
 }
 
+func (p *PostgresStore) GetBlockAtTimestamp(timestamp int64) (*types.BlockTimestamp, error) {
+	blockTimestamp := new(types.BlockTimestamp)
+	ctx := context.Background()
+
+	err := p.DB.NewSelect().
+		Model(blockTimestamp).
+		OrderExpr("ABS(timestamp - ?)", timestamp).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return blockTimestamp, nil
+}
+
 func (p *PostgresStore) InsertBlockTimestamp(blockTimestamp *types.BlockTimestamp) error {
 	ctx := context.Background()
 	_, err := p.DB.NewInsert().Model(blockTimestamp).Exec(ctx)
@@ -169,8 +186,6 @@ func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockT
 func (p *PostgresStore) BulkGetBlockTimestamp(to int64, from int64) ([]*types.BlockTimestamp, error) {
 	var blockTimestamps []*types.BlockTimestamp
 	ctx := context.Background()
-
-	fmt.Printf("Getting blocktimestamps from %d to %d\n", from, to)
 
 	err := p.DB.NewSelect().Model(&blockTimestamps).
 		Where("block >= ?", from).
@@ -260,7 +275,7 @@ func (p *PostgresStore) GetPairInfoByPair(pair string) (*types.Pair, error) {
 }
 
 func (p *PostgresStore) GetPairsWithToken(address string) ([]*types.Pair, error) {
-	pairInfos := []*types.Pair{}
+	var pairInfos []*types.Pair
 	ctx := context.Background()
 	err := p.DB.NewSelect().Model(&pairInfos).Where("token0_address = ? OR token1_address = ?", address, address).Scan(ctx)
 	if err != nil {

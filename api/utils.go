@@ -13,6 +13,7 @@ var (
 	errReadingBody      = errors.New("failed to read request body")
 	errMissingBody      = errors.New("missing request body")
 	errMissingAuth      = errors.New("missing Authentication header")
+	errUnmarshalParams  = errors.New("failed to unmarshal params")
 )
 
 type apiHandler func(w http.ResponseWriter, r *http.Request) error

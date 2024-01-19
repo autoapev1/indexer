@@ -46,7 +46,7 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 	case "idx_getBlockTimestamps":
 		return s.getBlockTimestamps(r)
 	case "idx_getBlockAtTimestamp":
-		return notImplemented(r)
+		return s.getBlockAtTimestamp(r)
 
 	// tokens
 	case "idx_findTokens":
@@ -184,7 +184,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 			Method: r.Method,
 			Error: &types.JRPCError{
 				Code:    -32602,
-				Message: "invalid params",
+				Message: errUnmarshalParams.Error(),
 			},
 		}
 	}
@@ -223,7 +223,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 			Method: r.Method,
 			Error: &types.JRPCError{
 				Code:    -32602,
-				Message: "invalid chain_id",
+				Message: errInternalServer.Error(),
 			},
 		}
 	}
@@ -233,4 +233,66 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 		Method: r.Method,
 		Result: blockTimestamps,
 	}
+}
+
+func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampResponse {
+	req := &types.GetBlockAtTimestampRequest{}
+
+	err := json.Unmarshal(r.Params, req)
+	if err != nil {
+		return &types.GetBlockAtTimestampResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.GetBlockAtTimestampResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.GetBlockAtTimestampResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	block, err := store.GetBlockAtTimestamp(req.Timestamp)
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to get block at timestamp", "err", err)
+		}
+		return &types.GetBlockAtTimestampResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.GetBlockAtTimestampResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: block,
+	}
+
 }
