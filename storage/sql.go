@@ -166,10 +166,18 @@ func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockT
 	return nil
 }
 
-func (p *PostgresStore) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTimestamp, error) {
-	blockTimestamps := []*types.BlockTimestamp{}
+func (p *PostgresStore) BulkGetBlockTimestamp(to int64, from int64) ([]*types.BlockTimestamp, error) {
+	var blockTimestamps []*types.BlockTimestamp
 	ctx := context.Background()
-	err := p.DB.NewSelect().Model(&blockTimestamps).Where("block >= ? AND block <= ?", from, to).Scan(ctx)
+
+	fmt.Printf("Getting blocktimestamps from %d to %d\n", from, to)
+
+	err := p.DB.NewSelect().Model(&blockTimestamps).
+		Where("block >= ?", from).
+		Where("block <= ?", to).
+		Limit(10000).
+		Scan(ctx)
+
 	if err != nil {
 		return blockTimestamps, err
 	}

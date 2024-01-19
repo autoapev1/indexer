@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -43,7 +44,7 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 
 	// block timestamps
 	case "idx_getBlockTimestamps":
-		return notImplemented(r)
+		return s.getBlockTimestamps(r)
 	case "idx_getBlockAtTimestamp":
 		return notImplemented(r)
 
@@ -170,5 +171,66 @@ func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
 		ID:     r.ID,
 		Method: r.Method,
 		Result: chains,
+	}
+}
+
+func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsResponse {
+	req := &types.GetBlockTimestampsRequest{}
+
+	err := json.Unmarshal(r.Params, req)
+	if err != nil {
+		return &types.GetBlockTimestampsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid params",
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.GetBlockTimestampsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(req.ChainID)
+	if store == nil {
+		return &types.GetBlockTimestampsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	blockTimestamps, err := store.BulkGetBlockTimestamp(req.ToBlock, req.FromBlock)
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to get block timestamps", "err", err)
+		}
+		return &types.GetBlockTimestampsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	return &types.GetBlockTimestampsResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: blockTimestamps,
 	}
 }

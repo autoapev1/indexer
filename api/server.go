@@ -126,18 +126,25 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
-	var req []*JRPCRequest
-
+	// read body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return writeError(w, http.StatusBadRequest, errReadingBody)
 	}
 
+	// check if body is empty
 	if len(body) == 0 {
 		return writeError(w, http.StatusBadRequest, errMissingBody)
 	}
 
-	if err := json.Unmarshal(body, &req); err != nil {
+	if !(body[0] == '[' && body[len(body)-1] == ']') {
+		body = append([]byte("["), body...)
+		body = append(body, ']')
+	}
+
+	// unmarshal the request
+	var reqs []*JRPCRequest
+	if err := json.Unmarshal(body, &reqs); err != nil {
 		slog.Error("failed to unmarshal request", "err", err)
 		return writeError(w, http.StatusBadRequest, errUnmarshalRequest)
 	}
@@ -154,7 +161,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 
 	var resp []Response
 	// range over the requests and handle them
-	for _, r := range req {
+	for _, r := range reqs {
 		response := s.handleJrpcRequest(r, authLevel)
 		resp = append(resp, response)
 	}

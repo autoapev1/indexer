@@ -10,7 +10,7 @@ type Store interface {
 	GetHight() (int64, error)
 	InsertBlockTimestamp(*types.BlockTimestamp) error
 	BulkInsertBlockTimestamp([]*types.BlockTimestamp) error
-	BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTimestamp, error)
+	BulkGetBlockTimestamp(to int64, from int64) ([]*types.BlockTimestamp, error)
 
 	// token info
 	GetTokenInfo(string) (*types.Token, error)

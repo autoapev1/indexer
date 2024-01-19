@@ -9,10 +9,10 @@ import (
 )
 
 type JRPCRequest struct {
-	ID      string `json:"id"`
-	JSONRPC string `json:"jsonrpc"`
-	Method  string `json:"method"`
-	Params  []byte `json:"params"`
+	ID      string          `json:"id"`
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params"`
 }
 
 type JRPCResponse struct {
