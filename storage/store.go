@@ -3,6 +3,8 @@ package storage
 import "github.com/autoapev1/indexer/types"
 
 type Store interface {
+	GetChainID() int64
+
 	// block timestamp
 	GetTimestampAtBlock(int64) (*types.BlockTimestamp, error)
 	GetHight() (int64, error)

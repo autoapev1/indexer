@@ -21,6 +21,7 @@ type Server struct {
 	stores    *storage.StoreMap
 	auth      auth.Provider
 	rateLimit *rateLimiter
+	debug     bool
 }
 
 // NewServer returns a new server given a Store interface.
@@ -28,6 +29,7 @@ func NewServer(conf config.Config, stores *storage.StoreMap) *Server {
 	return &Server{
 		config: conf,
 		stores: stores,
+		debug:  true,
 	}
 }
 
@@ -136,6 +138,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := json.Unmarshal(body, &req); err != nil {
+		slog.Error("failed to unmarshal request", "err", err)
 		return writeError(w, http.StatusBadRequest, errUnmarshalRequest)
 	}
 
@@ -149,7 +152,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	var resp []*JRPCResponse
+	var resp []Response
 	// range over the requests and handle them
 	for _, r := range req {
 		response := s.handleJrpcRequest(r, authLevel)

@@ -8,6 +8,7 @@ factoryV2Address = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 routerV3Address = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
 factoryV3Address = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 rpcURL = "http://localhost:8545"
+blockDuration = 12
 
 [[chains]]
 chainID = 56
@@ -19,6 +20,7 @@ factoryV2Address = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
 routerV3Address = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
 factoryV3Address = "0x6725F303b657a9451d8BA641348b6761A6CC7a17"
 rpcURL = "http://localhost:8546"
+blockDuration = 3
 
 [api]
 host = "localhost"

@@ -8,11 +8,16 @@ import (
 )
 
 type Chain struct {
-	ChainID       int
-	ChainName     string
-	Symbol        string
-	BlockDuration time.Duration
-	Http          string
+	ChainID       int           `json:"chain_id"`
+	Name          string        `json:"name"`
+	ShortName     string        `json:"short_name"`
+	ExplorerURL   string        `json:"explorer_url"`
+	RouterV2      string        `json:"router_v2"`
+	FactoryV2     string        `json:"factory_v2"`
+	RouterV3      string        `json:"router_v3"`
+	FactoryV3     string        `json:"factory_v3"`
+	BlockDuration time.Duration `json:"block_duration"`
+	Http          string        `json:"-"`
 }
 
 const (

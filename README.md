@@ -117,21 +117,19 @@ The available methods are:
 - `idx_getBlockTimestamps` - Get the timestamp for a range of block numbers
 - `idx_getBlockAtTimestamp` - Get the block number at a timestamp
 
-- `idx_getTokenByAddress` - Get info about a token by address
-- `idx_getTokensByCreator` - Get info about tokens created by an address
-- `idx_getTokensInBlock` - Get info about tokens created in a block range
 - `idx_findTokens` - Find tokens by using find params
 
-- `idx_getPairByAddress` - Get info about a pair by address
-- `idx_getPairsByToken` - Get info about pairs containing a token
-- `idx_getPairsInBlock` - Get info about pairs created in a block range
+- `idx_getTokenCount` - Get the total number of tokens
+
 - `idx_findPairs` - Find pairs by using find params
 
-- `idx_getWalletBalances` - Get wallet balances for a pair
+- `idx_getPairCount` - Get the total number of pairs
 
-- `idx_getTokenHolders` - Get token holders for a token
+- `idx_getWalletBalances` - Get wallet balances for a pair (WIP)
 
-- `idx_getOHLCVChartData` - Get OHLCV chart data for a pair
+- `idx_getTokenHolders` - Get token holders for a token (WIP)
+
+- `idx_getOHLCVChartData` - Get OHLCV chart data for a pair (WIP)
 
 ### Private API
 

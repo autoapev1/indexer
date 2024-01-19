@@ -102,7 +102,7 @@ func (a *SqlAuthProvider) Authenticate(r *http.Request) (AuthLevel, error) {
 		Scan(context.Background())
 
 	if err != nil {
-		return AuthLevelUnauthorized, ErrCheckingAuth
+		return AuthLevelUnauthorized, ErrUnauthorized
 	}
 
 	return AuthLevelBasic, nil

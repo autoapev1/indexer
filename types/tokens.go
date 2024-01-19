@@ -11,8 +11,8 @@ type Token struct {
 }
 
 type BlockTimestamp struct {
-	Block     int64 `json:"b" bun:",pk"`
-	Timestamp int64 `json:"t"`
+	Block     int64 `json:"block" bun:",pk"`
+	Timestamp int64 `json:"timestamp"`
 }
 
 type Pair struct {

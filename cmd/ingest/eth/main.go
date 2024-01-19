@@ -11,9 +11,9 @@ import (
 
 func main() {
 	conf := config.Get().Storage.Postgres
-	conf.Name = "eth"
+	conf.Name = "ETH"
 
-	db := storage.NewPostgresDB(conf)
+	db := storage.NewPostgresDB(conf).WithChainID(1)
 	err := db.Init()
 	if err != nil {
 		panic(err)

@@ -34,3 +34,15 @@ func (s *StoreMap) SetStore(chainID int64, store Store) bool {
 
 	return true
 }
+
+func (s *StoreMap) GetAll() []Store {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	stores := make([]Store, 0, len(s.m))
+	for _, v := range s.m {
+		stores = append(stores, v)
+	}
+
+	return stores
+}

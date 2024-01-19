@@ -16,11 +16,14 @@ import (
 )
 
 type PostgresStore struct {
-	DB *bun.DB
+	DB      *bun.DB
+	ChainID int64
 }
 
 func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
-	PostgresDB := &PostgresStore{}
+	PostgresDB := &PostgresStore{
+		ChainID: 0,
+	}
 	uri := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s", conf.User, conf.Password, conf.Host, conf.Name, conf.SSLMode)
 
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(uri)))
@@ -32,6 +35,11 @@ func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
 	//db.SetConnMaxIdleTime(30 * time.Second)
 
 	return PostgresDB
+}
+
+func (p *PostgresStore) WithChainID(chainID int64) *PostgresStore {
+	p.ChainID = chainID
+	return p
 }
 
 func (p *PostgresStore) Init() error {
@@ -108,11 +116,15 @@ func (p *PostgresStore) CreateIndexes() {
 
 }
 
+func (p *PostgresStore) GetChainID() int64 {
+	return p.ChainID
+}
+
 func (p *PostgresStore) GetTimestampAtBlock(blockNumber int64) (*types.BlockTimestamp, error) {
 	blockTimestamp := new(types.BlockTimestamp)
 	ctx := context.Background()
 
-	err := p.DB.NewSelect().Model(blockTimestamp).Where("block_number = ?", blockNumber).Scan(ctx)
+	err := p.DB.NewSelect().Model(blockTimestamp).Where("block = ?", blockNumber).Scan(ctx)
 	if err != nil {
 		return blockTimestamp, err
 	}
@@ -157,7 +169,7 @@ func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockT
 func (p *PostgresStore) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockTimestamp, error) {
 	blockTimestamps := []*types.BlockTimestamp{}
 	ctx := context.Background()
-	err := p.DB.NewSelect().Model(&blockTimestamps).Where("block_number >= ? AND block_number <= ?", from, to).Scan(ctx)
+	err := p.DB.NewSelect().Model(&blockTimestamps).Where("block >= ? AND block <= ?", from, to).Scan(ctx)
 	if err != nil {
 		return blockTimestamps, err
 	}
@@ -168,7 +180,7 @@ func (p *PostgresStore) BulkGetBlockTimestamp(to int, from int) ([]*types.BlockT
 func (p *PostgresStore) GetHight() (int64, error) {
 	var block int64
 	ctx := context.Background()
-	err := p.DB.NewSelect().ColumnExpr("MAX(block_number)").Scan(ctx, &block)
+	err := p.DB.NewSelect().ColumnExpr("MAX(block)").Scan(ctx, &block)
 	if err != nil {
 		return block, err
 	}
@@ -231,7 +243,7 @@ func (p *PostgresStore) GetTokenCount() (int64, error) {
 func (p *PostgresStore) GetPairInfoByPair(pair string) (*types.Pair, error) {
 	pairInfo := new(types.Pair)
 	ctx := context.Background()
-	err := p.DB.NewSelect().Model(pairInfo).Where("pair = ?", pair).Scan(ctx)
+	err := p.DB.NewSelect().Model(pairInfo).Where("pool_address = ?", pair).Scan(ctx)
 	if err != nil {
 		return pairInfo, err
 	}
@@ -242,7 +254,7 @@ func (p *PostgresStore) GetPairInfoByPair(pair string) (*types.Pair, error) {
 func (p *PostgresStore) GetPairsWithToken(address string) ([]*types.Pair, error) {
 	pairInfos := []*types.Pair{}
 	ctx := context.Background()
-	err := p.DB.NewSelect().Model(&pairInfos).Where("token0 = ? OR token1 = ?", address, address).Scan(ctx)
+	err := p.DB.NewSelect().Model(&pairInfos).Where("token0_address = ? OR token1_address = ?", address, address).Scan(ctx)
 	if err != nil {
 		return pairInfos, err
 	}
@@ -296,12 +308,12 @@ func (p *PostgresStore) GetUniqueAddressesFromPairs() ([]string, error) {
 	// Query to get distinct addresses from both token0 and token1
 	var addresses []string
 	ctx := context.Background()
-	err := p.DB.NewSelect().ColumnExpr("DISTINCT token0").Scan(ctx, &addresses)
+	err := p.DB.NewSelect().ColumnExpr("DISTINCT token0_address").Scan(ctx, &addresses)
 	if err != nil {
 		return addresses, err
 	}
 
-	err = p.DB.NewSelect().ColumnExpr("DISTINCT token1").Scan(ctx, &addresses)
+	err = p.DB.NewSelect().ColumnExpr("DISTINCT token1_address").Scan(ctx, &addresses)
 	if err != nil {
 		return addresses, err
 	}

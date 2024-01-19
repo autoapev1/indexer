@@ -39,7 +39,7 @@ func main() {
 		}
 
 		c.Name = v.ShortName
-		db := storage.NewPostgresDB(c)
+		db := storage.NewPostgresDB(c).WithChainID(int64(v.ChainID))
 		storeMap.SetStore(int64(v.ChainID), db)
 	}
 
