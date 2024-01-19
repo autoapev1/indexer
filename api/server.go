@@ -69,7 +69,7 @@ func (s *Server) Listen(addr string) error {
 
 	s.initRouter()
 
-	fmt.Printf("API Server Listening on: \t%s", addr)
+	fmt.Printf("API Server Listening on: \t%s\n", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
@@ -83,8 +83,7 @@ func (s *Server) initRouter() {
 	s.router.Use(middleware.RealIP)
 
 	// routes
-	s.router.Get("/rpc", makeAPIHandler(s.handleBase))
-	s.router.Get("/auth", makeAPIHandler(s.handleAuth))
+	s.router.Get("/", makeAPIHandler(s.handleBase))
 	s.router.Get("/status", handleStatus)
 
 }
@@ -102,7 +101,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleBase(w http.ResponseWriter, r *http.Request) error {
 	var req []*JRPCRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, &JRPCResponse{
+		return writeJSON(w, http.StatusBadRequest, &JRPCResponse{
 			Error: &JRPCError{
 				Code:    -32600,
 				Message: err.Error(),
@@ -110,25 +109,12 @@ func (s *Server) handleBase(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	var resp []*JRPCResponse
-
-	// range over the requests and handle them
-	for _, r := range req {
-		response := s.handleBaseRequest(r)
-		resp = append(resp, response)
-
-	}
-
-	return writeJSON(w, http.StatusOK, resp)
-}
-
-func (s *Server) handleAuth(w http.ResponseWriter, r *http.Request) error {
-	var req []*JRPCRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, &JRPCResponse{
+	authLevel := r.Context().Value(auth.AuthKey).(auth.AuthLevel)
+	if !auth.IsValidAuthLevel(authLevel) {
+		return writeJSON(w, http.StatusInternalServerError, &JRPCResponse{
 			Error: &JRPCError{
-				Code:    -36000,
-				Message: err.Error(),
+				Code:    -32600,
+				Message: "internal server error",
 			},
 		})
 	}
@@ -136,9 +122,8 @@ func (s *Server) handleAuth(w http.ResponseWriter, r *http.Request) error {
 	var resp []*JRPCResponse
 	// range over the requests and handle them
 	for _, r := range req {
-		response := s.handleAuthRequest(r)
+		response := s.handleJrpcRequest(r, authLevel)
 		resp = append(resp, response)
-
 	}
 
 	return writeJSON(w, http.StatusOK, resp)

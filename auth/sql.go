@@ -102,7 +102,7 @@ func (a *SqlAuthProvider) Authenticate(r *http.Request) (AuthLevel, error) {
 		return AuthLevelUnauthorized, ErrCheckingAuth
 	}
 
-	return AuthLevelAccess, nil
+	return AuthLevelBasic, nil
 }
 
 func (a *SqlAuthProvider) Register() (string, error) {

@@ -1,6 +1,12 @@
 package api
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"log/slog"
+	"strings"
+
+	"github.com/autoapev1/indexer/auth"
+)
 
 type JRPCRequest struct {
 	ID      int64           `json:"id"`
@@ -19,4 +25,40 @@ type JRPCResponse struct {
 type JRPCError struct {
 	Code    int64  `json:"code"`
 	Message string `json:"message"`
+}
+
+type MethodPrefix string
+
+const (
+	MethodInvalid MethodPrefix = ""
+	MethodIdx     MethodPrefix = "idx_"
+	MethodAuth    MethodPrefix = "auth_"
+)
+
+func getMethodPrefix(s string) MethodPrefix {
+	if !strings.Contains(s, "_") {
+		return MethodInvalid
+	}
+	m := strings.Split(s, "_")[0]
+
+	switch m {
+	case "idx":
+		return MethodIdx
+	case "auth":
+		return MethodAuth
+	default:
+		return MethodInvalid
+	}
+}
+
+func hasAccess(methodPrefix MethodPrefix, authlvl auth.AuthLevel) bool {
+	switch methodPrefix {
+	case MethodIdx:
+		return authlvl >= auth.AuthLevelBasic
+	case MethodAuth:
+		return authlvl >= auth.AuthLevelMaster
+	default:
+		slog.Warn("invalid method prefix", "method_prefix", methodPrefix, "auth_level", authlvl)
+		return false
+	}
 }

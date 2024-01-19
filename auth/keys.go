@@ -19,9 +19,18 @@ type AuthLevel int
 
 const (
 	AuthLevelUnauthorized AuthLevel = iota
-	AuthLevelAccess
+	AuthLevelBasic
 	AuthLevelMaster
 )
+
+func IsValidAuthLevel(lvl AuthLevel) bool {
+	switch lvl {
+	case AuthLevelUnauthorized, AuthLevelBasic, AuthLevelMaster:
+		return true
+	default:
+		return false
+	}
+}
 
 // key types
 type KeyType int

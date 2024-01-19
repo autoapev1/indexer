@@ -1,6 +1,33 @@
 package api
 
-func (s *Server) handleBaseRequest(r *JRPCRequest) *JRPCResponse {
+import "github.com/autoapev1/indexer/auth"
+
+func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) *JRPCResponse {
+
+	methodPrefix := getMethodPrefix(r.Method)
+
+	if methodPrefix == MethodInvalid {
+		return &JRPCResponse{
+			ID:      r.ID,
+			JSONRPC: "2.0",
+			Error: &JRPCError{
+				Code:    -32601,
+				Message: "Method not found",
+			},
+		}
+	}
+
+	if !hasAccess(methodPrefix, authlvl) {
+		return &JRPCResponse{
+			ID:      r.ID,
+			JSONRPC: "2.0",
+			Error: &JRPCError{
+				Code:    -32800,
+				Message: "Unauthorized",
+			},
+		}
+	}
+
 	switch r.Method {
 	// global
 	case "idx_getBlockNumber":
@@ -29,26 +56,12 @@ func (s *Server) handleBaseRequest(r *JRPCRequest) *JRPCResponse {
 	// charts
 	case "idx_getOHLCVChartData":
 
-	default:
-		return &JRPCResponse{
-			ID:      r.ID,
-			JSONRPC: "2.0",
-			Error: &JRPCError{
-				Code:    -32601,
-				Message: "Method not found",
-			},
-		}
-	}
-	return nil
-}
-
-func (s *Server) handleAuthRequest(r *JRPCRequest) *JRPCResponse {
-	switch r.Method {
 	case "auth_generateKey":
 	case "auth_deleteKey":
 	case "auth_getKeyStats":
 	case "auth_getAuthMethod":
 	case "auth_getKeyType":
+
 	default:
 		return &JRPCResponse{
 			ID:      r.ID,

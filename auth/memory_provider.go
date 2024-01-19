@@ -72,7 +72,7 @@ func (a *MemoryProvider) Authenticate(r *http.Request) (AuthLevel, error) {
 		return AuthLevelUnauthorized, ErrUnauthorized
 	}
 
-	return AuthLevelAccess, nil
+	return AuthLevelBasic, nil
 }
 
 func (a *MemoryProvider) Register() (string, error) {
