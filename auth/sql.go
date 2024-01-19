@@ -74,6 +74,9 @@ func (a *SqlAuthProvider) initTables() {
 		Unique().
 		Exec(context.Background())
 	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return
+		}
 		slog.Error("error creating index key_inx", "err", err)
 	}
 

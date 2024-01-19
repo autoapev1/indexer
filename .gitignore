@@ -25,4 +25,4 @@ bin
 docker/tmp
 .DS_Store
 adapter/data
-.toml
+config.toml

@@ -100,12 +100,17 @@ func (s *Server) initRouter() {
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.Logger)
 	s.router.Use(middleware.RealIP)
-	s.router.Use(authMiddleware(s.auth))
-	s.router.Use(s.rateLimitMiddleware(s.config.API.RateLimitRequests, s.config.API.RateLimitStrategy))
 
-	// routes
-	s.router.Get("/", makeAPIHandler(s.handleRequest))
+	// auth middleware and routes
+	s.router.Group(func(r chi.Router) {
+		r.Use(authMiddleware(s.auth))
+		r.Use(s.rateLimitMiddleware(s.config.API.RateLimitRequests, s.config.API.RateLimitStrategy))
+
+		r.Post("/", makeAPIHandler(s.handlePost))
+	})
+
 	s.router.Get("/status", handleStatus)
+	s.router.Get("/", makeAPIHandler(s.handleGet))
 
 }
 
@@ -118,8 +123,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
-// main request handler func
-func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 	var req []*JRPCRequest
 
 	body, err := io.ReadAll(r.Body)
@@ -128,11 +132,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if len(body) == 0 {
-		// Return a blank HTML page
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("<html><body></body></html>"))
-		return nil
+		return writeError(w, http.StatusBadRequest, errMissingBody)
 	}
 
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -157,4 +157,11 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return writeJSON(w, http.StatusOK, resp)
+}
+
+func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("<html><body></body></html>"))
+	return nil
 }
