@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 
 	"github.com/autoapev1/indexer/auth"
@@ -150,20 +149,13 @@ func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
 	chains := []types.Chain{}
 	for _, c := range s.config.Chains {
 		tc := types.Chain{
-			ChainID:       c.ChainID,
-			Name:          c.Name,
-			ShortName:     c.ShortName,
-			ExplorerURL:   c.ExplorerURL,
-			RouterV2:      c.RouterV2Address,
-			FactoryV2:     c.FactoryV2Address,
-			RouterV3:      c.RouterV3Address,
-			FactoryV3:     c.FactoryV3Address,
-			BlockDuration: int64(c.BlockDuration),
+			ChainID:     c.ChainID,
+			Name:        c.Name,
+			ShortName:   c.ShortName,
+			ExplorerURL: c.ExplorerURL,
 		}
 		chains = append(chains, tc)
 	}
-
-	fmt.Println(len(s.config.Chains))
 
 	return &types.GetChainsResponse{
 		ID:     r.ID,

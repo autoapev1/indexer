@@ -450,12 +450,16 @@ func (p *PostgresStore) GetUniqueAddressesFromPairs() ([]string, error) {
 	// Query to get distinct addresses from both token0 and token1
 	var addresses []string
 	ctx := context.Background()
-	err := p.DB.NewSelect().ColumnExpr("DISTINCT token0_address").Scan(ctx, &addresses)
+	err := p.DB.NewSelect().
+		Table("pairs").
+		ColumnExpr("DISTINCT token0_address").Scan(ctx, &addresses)
 	if err != nil {
 		return addresses, err
 	}
 
-	err = p.DB.NewSelect().ColumnExpr("DISTINCT token1_address").Scan(ctx, &addresses)
+	err = p.DB.NewSelect().
+		Table("pairs").
+		ColumnExpr("DISTINCT token1_address").Scan(ctx, &addresses)
 	if err != nil {
 		return addresses, err
 	}
@@ -477,7 +481,9 @@ func (p *PostgresStore) GetUniqueAddressesFromPairs() ([]string, error) {
 func (p *PostgresStore) GetUniqueAddressesFromTokens() ([]string, error) {
 	var addresses []string
 	ctx := context.Background()
-	err := p.DB.NewSelect().ColumnExpr("DISTINCT address").Scan(ctx, &addresses)
+	err := p.DB.NewSelect().
+		Table("tokens").
+		ColumnExpr("DISTINCT address").Scan(ctx, &addresses)
 	if err != nil {
 		return addresses, err
 	}
