@@ -7,12 +7,22 @@ type Token struct {
 	Decimals       uint8  `json:"decimals"`
 	Creator        string `json:"creator"`
 	CreatedAtBlock int64  `json:"created_at"`
+	CreationHash   string `json:"creation_hash"`
 	ChainID        int16  `json:"chain_id"`
 }
 
 type BlockTimestamp struct {
 	Block     int64 `json:"block" bun:",pk"`
 	Timestamp int64 `json:"timestamp"`
+}
+
+type Creator struct {
+	Hash    string `json:"hash"`
+	Creator string `json:"creator"`
+}
+
+type BlockNumber struct {
+	Number string `json:"blockNumber"`
 }
 
 type Pair struct {

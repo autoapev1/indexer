@@ -1,9 +1,12 @@
 package eth
 
 import (
+	"fmt"
+
 	"github.com/autoapev1/indexer/config"
 	"github.com/autoapev1/indexer/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/crypto/sha3"
 )
 
 type Network struct {
@@ -28,4 +31,12 @@ func (n *Network) Init() error {
 	}
 
 	return nil
+}
+
+func toMethodChecksum(method string) string {
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write([]byte(method))
+	sum := hash.Sum(nil)
+
+	return fmt.Sprintf("0x%x", sum[:4])
 }

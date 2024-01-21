@@ -32,14 +32,23 @@ func main() {
 		panic(err)
 	}
 
-	bts, err := eth.GetBlockTimestamps(0, 10)
+	tokens, err := eth.GetTokenInfo([]string{"0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A"})
 	if err != nil {
 		panic(err)
 	}
 
-	for _, v := range bts {
-		fmt.Printf("Block %d timestamp %d\n", v.Block, v.Timestamp)
+	for _, v := range tokens {
+		fmt.Printf("Token %v\n", v)
 	}
+
+	// bts, err := eth.GetBlockTimestamps(0, 10)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// for _, v := range bts {
+	// 	fmt.Printf("Block %d timestamp %d\n", v.Block, v.Timestamp)
+	// }
 
 	// pairAddrs, err := db.GetUniqueAddressesFromPairs()
 	// if err != nil {
