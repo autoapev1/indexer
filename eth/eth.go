@@ -2,9 +2,11 @@ package eth
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/autoapev1/indexer/config"
 	"github.com/autoapev1/indexer/types"
+	"github.com/chenzhijie/go-web3"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/crypto/sha3"
 )
@@ -13,6 +15,7 @@ type Network struct {
 	Chain  types.Chain
 	config config.Config
 	Client *ethclient.Client
+	Web3   *web3.Web3
 }
 
 func NewNetwork(c types.Chain, conf config.Config) *Network {
@@ -27,8 +30,17 @@ func (n *Network) Init() error {
 
 	n.Client, err = ethclient.Dial(n.Chain.Http)
 	if err != nil {
-		panic(err)
+		slog.Error("Error initilizing eth client", "error", err)
+		return err
 	}
+
+	w3, err := web3.NewWeb3(n.Chain.Http)
+	if err != nil {
+		slog.Error("Error initilizing web3 client", "error", err)
+		return err
+	}
+
+	n.Web3 = w3
 
 	return nil
 }

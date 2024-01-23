@@ -19,6 +19,7 @@ import (
 type PostgresStore struct {
 	DB      *bun.DB
 	ChainID int64
+	debug   bool
 }
 
 func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
@@ -32,14 +33,16 @@ func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
 	db := bun.NewDB(pgdb, pgdialect.New())
 	PostgresDB.DB = db
 
-	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-	//db.SetConnMaxIdleTime(30 * time.Second)
-
 	return PostgresDB
 }
 
 func (p *PostgresStore) WithChainID(chainID int64) *PostgresStore {
 	p.ChainID = chainID
+	return p
+}
+
+func (p *PostgresStore) WithDebug() *PostgresStore {
+	p.debug = true
 	return p
 }
 
@@ -51,6 +54,9 @@ func (p *PostgresStore) Init() error {
 	}
 
 	p.CreateIndexes()
+	if p.debug {
+		p.DB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	}
 
 	logger.Time("Init()", time.Since(st), true)
 

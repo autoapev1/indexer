@@ -1,27 +1,30 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/autoapev1/indexer/config"
 	"github.com/autoapev1/indexer/eth"
+	"github.com/autoapev1/indexer/storage"
 	"github.com/autoapev1/indexer/types"
 )
 
 func main() {
 	config.Parse("config.toml")
-	// conf := config.Get().Storage.Postgres
-	// conf.Name = "ETH"
+	conf := config.Get().Storage.Postgres
+	conf.Name = "ETH"
 
-	// db := storage.NewPostgresDB(conf).WithChainID(1)
-	// err := db.Init()
-	// if err != nil {
-	// 	panic(err)
-	// }
+	db := storage.NewPostgresDB(conf).WithChainID(1)
+	err := db.Init()
+	if err != nil {
+		panic(err)
+	}
 
 	chain := types.Chain{
 		Name:      "Ethereum",
-		Http:      "http://localhost:7545",
+		Http:      "https://rpc.ankr.com/eth/1f648783cc10d97d45439523ee0b0348d124bd6eaf13fa0664e1d15063e16679",
 		ShortName: "ETH",
 		ChainID:   1,
 	}
@@ -32,15 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	tokens, err := eth.GetTokenInfo([]string{"0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A"})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, v := range tokens {
-		fmt.Printf("Token %v\n", v)
-	}
-
+	getPairs(eth)
 	// bts, err := eth.GetBlockTimestamps(0, 10)
 	// if err != nil {
 	// 	panic(err)
@@ -79,4 +74,27 @@ func main() {
 	// fmt.Printf("Found %d unique addresses\n", len(uniqueAddrs))
 	// fmt.Printf("Found %d unique pair addresses\n", len(pairAddrs))
 	// fmt.Printf("Found %d unique token addresses\n", len(tokenAddrs))
+}
+
+func getTokens(n *eth.Network) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+	tokens, err := n.GetTokenInfo(ctx, []string{"0xE0B7927c4aF23765Cb51314A0E0521A9645F0E2A"})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, v := range tokens {
+		fmt.Printf("Token %v\n", v)
+	}
+}
+
+func getPairs(n *eth.Network) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+	_, err := n.GetPairs(ctx, 18000010, 18000000)
+	if err != nil {
+		panic(err)
+	}
+
 }

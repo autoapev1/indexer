@@ -3,120 +3,43 @@ package eth
 import (
 	"context"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"log/slog"
+	"math/big"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/autoapev1/indexer/types"
-	etypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/autoapev1/indexer/utils"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-func (n *Network) GetBlockTimestamps(from int64, to int64) ([]*types.BlockTimestamp, error) {
-	var blockTimestamps []*types.BlockTimestamp
-
-	batchSize := n.config.Sync.BlockTimestamps.BatchSize
-	concurrency := n.config.Sync.BlockTimestamps.BatchConcurrency
-
-	if batchSize <= 0 {
-		batchSize = 100
-	}
-
-	if concurrency <= 0 {
-		concurrency = 2
-	}
-
-	batches := n.makeBlockTimestampBatches(from, to, int64(batchSize))
-
-	workers := make(chan int, concurrency)
-	var wg sync.WaitGroup
-	counter := 0
-	for {
-		if counter >= len(batches) {
-			break
-		}
-
-		workers <- 1
-		wg.Add(1)
-		batch := batches[counter]
-		counter++
-
-		go func(batch []rpc.BatchElem) {
-			defer func() {
-				<-workers
-				wg.Done()
-			}()
-
-			bts, err := n.getBlockTimestampBatch(batch)
-			if err != nil {
-				slog.Error("getBlockTimestampBatch", "err", err)
-				return
-			}
-
-			blockTimestamps = append(blockTimestamps, bts...)
-		}(batch)
-	}
-
-	wg.Wait()
-
-	return blockTimestamps, nil
+type blockRange struct {
+	to   int64
+	from int64
 }
 
-func (n *Network) makeBlockTimestampBatches(from int64, to int64, batchSize int64) [][]rpc.BatchElem {
-	batchCount := (to - from) / batchSize
-	if (to-from)%batchSize != 0 {
-		batchCount++
+func toRange(to int64, from int64) blockRange {
+	return blockRange{
+		to:   to,
+		from: from,
 	}
-
-	batches := make([][]rpc.BatchElem, 0, batchCount)
-
-	for i := from; i <= to; i += batchSize {
-		end := i + batchSize
-		if end > to+1 {
-			end = to + 1
-		}
-
-		batch := make([]rpc.BatchElem, 0, end-i)
-		for j := i; j < end; j++ {
-			batch = append(batch, rpc.BatchElem{
-				Method: "eth_getBlockByNumber",
-				Args:   []interface{}{j, false},
-				Result: new(etypes.Header),
-			})
-		}
-		batches = append(batches, batch)
-	}
-
-	return batches
 }
 
-func (n *Network) getBlockTimestampBatch(batch []rpc.BatchElem) ([]*types.BlockTimestamp, error) {
-	var blockTimestamps []*types.BlockTimestamp
-
-	ctx := context.Background()
-	if err := n.Client.Client().BatchCallContext(ctx, batch); err != nil {
-		return nil, err
+func (b blockRange) validate() error {
+	if b.to < b.from {
+		return errors.New("to must be greater than from")
 	}
 
-	for _, b := range batch {
-		if b.Error != nil {
-			return nil, b.Error
-		}
-	}
-
-	for _, b := range batch {
-		header := b.Result.(*etypes.Header)
-		blockTimestamps = append(blockTimestamps, &types.BlockTimestamp{
-			Block:     header.Number.Int64(),
-			Timestamp: int64(header.Time),
-		})
-	}
-
-	return blockTimestamps, nil
+	return nil
 }
 
-func (n *Network) GetTokenInfo(tokens []string) ([]*types.Token, error) {
+func (n *Network) GetTokenInfo(ctx context.Context, tokens []string) ([]*types.Token, error) {
 	tokensInfo := make([]*types.Token, 0, len(tokens))
 
 	concurrency := n.config.Sync.Tokens.BatchConcurrency
@@ -151,7 +74,7 @@ func (n *Network) GetTokenInfo(tokens []string) ([]*types.Token, error) {
 				wg.Done()
 			}()
 
-			tis, err := n.getStage1TokenInfoBatch(batch)
+			tis, err := n.getStage1TokenInfoBatch(ctx, batch)
 			if err != nil {
 				slog.Error("getStage1TokenInfoBatch", "err", err)
 				return
@@ -186,7 +109,7 @@ func (n *Network) GetTokenInfo(tokens []string) ([]*types.Token, error) {
 				wg.Done()
 			}()
 
-			err := n.getStage2TokenInfoBatch(batch, batchedTokens)
+			err := n.getStage2TokenInfoBatch(ctx, batch, batchedTokens)
 			if err != nil {
 				slog.Error("getStage2TokenInfoBatch", "err", err)
 				return
@@ -240,10 +163,9 @@ func (n *Network) makeStage1TokenInfoBatches(tokens []string) [][]rpc.BatchElem 
 	return batches
 }
 
-func (n *Network) getStage1TokenInfoBatch(batch []rpc.BatchElem) (*types.Token, error) {
+func (n *Network) getStage1TokenInfoBatch(ctx context.Context, batch []rpc.BatchElem) (*types.Token, error) {
 	token := &types.Token{}
 
-	ctx := context.Background()
 	if err := n.Client.Client().BatchCallContext(ctx, batch); err != nil {
 		return nil, err
 	}
@@ -342,9 +264,8 @@ func (n *Network) makeStage2TokenInfoBatches(tokens []*types.Token, batchSize in
 	return batches, tokenBatches
 }
 
-func (n *Network) getStage2TokenInfoBatch(batch []rpc.BatchElem, tokens []*types.Token) error {
+func (n *Network) getStage2TokenInfoBatch(ctx context.Context, batch []rpc.BatchElem, tokens []*types.Token) error {
 
-	ctx := context.Background()
 	if err := n.Client.Client().BatchCallContext(ctx, batch); err != nil {
 		return err
 	}
@@ -354,7 +275,6 @@ func (n *Network) getStage2TokenInfoBatch(batch []rpc.BatchElem, tokens []*types
 			return b.Error
 		}
 	}
-
 	for i, b := range batch {
 		blockNumber, ok := b.Result.(*types.BlockNumber)
 		if !ok {
@@ -375,4 +295,100 @@ func (n *Network) getStage2TokenInfoBatch(batch []rpc.BatchElem, tokens []*types
 
 	return nil
 
+}
+
+func (n *Network) GetPairs(ctx context.Context, to int64, from int64) ([]*types.Pair, error) {
+	pairs := make([]*types.Pair, 0)
+
+	bRange := toRange(to, from)
+	if err := bRange.validate(); err != nil {
+		return nil, err
+	}
+
+	batchRange := n.config.Sync.Pairs.BlockRange
+
+	if batchRange > 1000 {
+		batchRange = 200
+	}
+
+	var (
+		V2factoryAddr string
+		V3factoryAddr string
+		V2factoryABI  string
+		V3factoryABI  string
+		V2eventSig    common.Hash
+		V3eventSig    common.Hash
+	)
+	switch n.Chain.ChainID {
+	case 1:
+		V2factoryABI = types.EthV2FactoryABI
+		V3factoryABI = types.EthV3FactoryABI
+		V2factoryAddr = types.EthV2FactoryAddress
+		V3factoryAddr = types.EthV3FactoryAddress
+
+	case 56:
+		V2factoryABI = types.BscV2FactoryABI
+		V3factoryABI = types.BscV3FactoryABI
+		V2factoryAddr = types.BscV2FactoryAddress
+		V3factoryAddr = types.BscV3FactoryAddress
+	default:
+		return nil, errors.New("invalid chain (n.Chain.ChainID)")
+	}
+
+	v2factoryDecoder, err := abi.JSON(strings.NewReader(V2factoryABI))
+	if err != nil {
+		return nil, err
+	}
+
+	v3factoryDecoder, err := abi.JSON(strings.NewReader(V3factoryABI))
+	if err != nil {
+		return nil, err
+	}
+
+	V2eventSig = utils.TopicToHash("PairCreated(address,address,address,uint256)")
+	V3eventSig = utils.TopicToHash("PoolCreated(address,address,uint24,int24,address)")
+
+	v2s, v2err := n.getPairs(ctx, v2factoryDecoder, V2eventSig, V2factoryAddr, bRange)
+	v3s, v3err := n.getPairs(ctx, v3factoryDecoder, V3eventSig, V3factoryAddr, bRange)
+
+	if v2err != nil {
+		return pairs, v2err
+	}
+
+	if v3err != nil {
+		return pairs, v3err
+	}
+
+	pairs = append(pairs, v2s...)
+	pairs = append(pairs, v3s...)
+
+	return pairs, nil
+}
+
+func (n *Network) getPairs(ctx context.Context, decoder abi.ABI, signature common.Hash, factory string, bRange blockRange) ([]*types.Pair, error) {
+	var (
+		pairs = make([]*types.Pair, 0)
+		err   error
+	)
+	fmt.Println("getPairs")
+	topic := make([][]common.Hash, 0, 1)
+	topic = append(topic, []common.Hash{signature})
+
+	filter := ethereum.FilterQuery{
+		FromBlock: big.NewInt(bRange.from),
+		ToBlock:   big.NewInt(bRange.to),
+		Addresses: []common.Address{common.HexToAddress(factory)},
+		Topics:    topic,
+	}
+
+	logs, err := n.Client.FilterLogs(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("logs: +%v\n", logs)
+
+	for _, l := range logs {
+		fmt.Printf("log : %v", l)
+	}
+	return pairs, err
 }
