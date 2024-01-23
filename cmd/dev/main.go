@@ -92,9 +92,13 @@ func getTokens(n *eth.Network) {
 func getPairs(n *eth.Network) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
-	_, err := n.GetPairs(ctx, 18000010, 18000000)
+	pairs, err := n.GetPairs(ctx, 18000010, 18000000)
 	if err != nil {
 		panic(err)
+	}
+
+	for _, v := range pairs {
+		fmt.Printf("Pair %v\n", v)
 	}
 
 }

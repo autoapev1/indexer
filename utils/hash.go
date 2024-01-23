@@ -11,3 +11,7 @@ func TopicToHash(topic string) common.Hash {
 	commonHash := common.BytesToHash(sha3Hash)
 	return commonHash
 }
+
+func ExtractAddress(a string) common.Address {
+	return common.HexToAddress(a)
+}

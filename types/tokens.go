@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 type Token struct {
 	Address        string `json:"address" bun:",pk"`
 	Name           string `json:"name"`
@@ -35,6 +37,13 @@ type Pair struct {
 	CreatedAt     int64  `json:"created_at"`
 	Hash          string `json:"hash" bun:",pk"`
 	ChainID       int16  `json:"chain_id"`
+}
+
+func (p *Pair) Lower() {
+	p.Token0Address = strings.ToLower(p.Token0Address)
+	p.Token1Address = strings.ToLower(p.Token1Address)
+	p.PoolAddress = strings.ToLower(p.PoolAddress)
+	p.Hash = strings.ToLower(p.Hash)
 }
 
 type OHLC struct {

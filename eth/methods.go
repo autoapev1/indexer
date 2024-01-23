@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"log/slog"
 	"math/big"
 	"strconv"
@@ -297,6 +296,13 @@ func (n *Network) getStage2TokenInfoBatch(ctx context.Context, batch []rpc.Batch
 
 }
 
+type pairMode int
+
+const (
+	pairModeV2 pairMode = iota
+	pairModeV3
+)
+
 func (n *Network) GetPairs(ctx context.Context, to int64, from int64) ([]*types.Pair, error) {
 	pairs := make([]*types.Pair, 0)
 
@@ -348,8 +354,8 @@ func (n *Network) GetPairs(ctx context.Context, to int64, from int64) ([]*types.
 	V2eventSig = utils.TopicToHash("PairCreated(address,address,address,uint256)")
 	V3eventSig = utils.TopicToHash("PoolCreated(address,address,uint24,int24,address)")
 
-	v2s, v2err := n.getPairs(ctx, v2factoryDecoder, V2eventSig, V2factoryAddr, bRange)
-	v3s, v3err := n.getPairs(ctx, v3factoryDecoder, V3eventSig, V3factoryAddr, bRange)
+	v2s, v2err := n.getPairs(ctx, v2factoryDecoder, V2eventSig, V2factoryAddr, bRange, pairModeV2)
+	v3s, v3err := n.getPairs(ctx, v3factoryDecoder, V3eventSig, V3factoryAddr, bRange, pairModeV3)
 
 	if v2err != nil {
 		return pairs, v2err
@@ -365,12 +371,11 @@ func (n *Network) GetPairs(ctx context.Context, to int64, from int64) ([]*types.
 	return pairs, nil
 }
 
-func (n *Network) getPairs(ctx context.Context, decoder abi.ABI, signature common.Hash, factory string, bRange blockRange) ([]*types.Pair, error) {
+func (n *Network) getPairs(ctx context.Context, decoder abi.ABI, signature common.Hash, factory string, bRange blockRange, mode pairMode) ([]*types.Pair, error) {
 	var (
 		pairs = make([]*types.Pair, 0)
 		err   error
 	)
-	fmt.Println("getPairs")
 	topic := make([][]common.Hash, 0, 1)
 	topic = append(topic, []common.Hash{signature})
 
@@ -385,10 +390,99 @@ func (n *Network) getPairs(ctx context.Context, decoder abi.ABI, signature commo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("logs: +%v\n", logs)
 
-	for _, l := range logs {
-		fmt.Printf("log : %v", l)
+	switch mode {
+	case pairModeV2:
+		for _, l := range logs {
+			if len(l.Topics) != 3 {
+				slog.Warn("error decoding v2 PairCreated event", "error", "len(l.Topics) != 3")
+				continue
+			}
+
+			p := &types.Pair{
+				ChainID:       int16(n.Chain.ChainID),
+				CreatedAt:     int64(l.BlockNumber),
+				Hash:          l.TxHash.String(),
+				Token0Address: common.HexToAddress((l.Topics[1].String())).String(),
+				Token1Address: common.HexToAddress((l.Topics[2].String())).String(),
+				Fee:           0,
+				TickSpacing:   0,
+				PoolType:      2,
+			}
+
+			decoded, err := decoder.Unpack("PairCreated", l.Data)
+			if err != nil {
+				slog.Warn("error decoding v2 PairCreated event", "error", err)
+				continue
+			}
+
+			if len(decoded) != 2 {
+				slog.Warn("error decoding v2 PairCreated event", "error", "len(decoded) != 2")
+				continue
+			}
+
+			pair, ok := decoded[0].(common.Address)
+			if !ok {
+				slog.Warn("error decoding v2 PairCreated event", "error", "pair, ok := decoded[0].(common.Address)")
+				continue
+			}
+
+			p.PoolAddress = pair.String()
+			p.Lower()
+			pairs = append(pairs, p)
+		}
+
+	case pairModeV3:
+		for _, l := range logs {
+			if len(l.Topics) != 4 {
+				slog.Warn("error decoding v3 PoolCreated event", "error", "len(l.Topics) != 4")
+				continue
+			}
+
+			p := &types.Pair{
+				ChainID:       int16(n.Chain.ChainID),
+				CreatedAt:     int64(l.BlockNumber),
+				Hash:          l.TxHash.String(),
+				Token0Address: common.HexToAddress((l.Topics[1].String())).String(),
+				Token1Address: common.HexToAddress((l.Topics[2].String())).String(),
+				Fee:           l.Topics[3].Big().Int64(),
+				PoolType:      3,
+				PoolAddress:   "unknown",
+				TickSpacing:   0,
+			}
+
+			decoded, err := decoder.Unpack("PoolCreated", l.Data)
+			if err != nil {
+				slog.Warn("error decoding v3 PoolCreated event", "error", err)
+				continue
+			}
+
+			if len(decoded) != 2 {
+				slog.Warn("error decoding v3 PoolCreated event", "error", "len(decoded) != 2")
+				continue
+			}
+
+			tickSpacing, ok := decoded[0].(*big.Int)
+			if !ok {
+				slog.Warn("error decoding v3 PoolCreated event", "error", "p.TickSpacing, ok = decoded[0].(*big.Int)")
+				continue
+			}
+
+			poolAddress, ok := decoded[1].(common.Address)
+			if !ok {
+				slog.Warn("error decoding v3 PoolCreated event", "error", "poolAddress, ok := decoded[1].(common.Address)")
+				continue
+			}
+
+			p.PoolAddress = poolAddress.String()
+			p.TickSpacing = tickSpacing.Int64()
+
+			p.Lower()
+			pairs = append(pairs, p)
+		}
+	default:
+		return nil, errors.New("invalid pair mode")
 	}
-	return pairs, err
+
+	return pairs, nil
 }
