@@ -126,6 +126,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
+	isBatch := true
 	// read body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -140,6 +141,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 	if !(body[0] == '[' && body[len(body)-1] == ']') {
 		body = append([]byte("["), body...)
 		body = append(body, ']')
+		isBatch = false
 	}
 
 	// unmarshal the request
@@ -164,6 +166,10 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) error {
 	for _, r := range reqs {
 		response := s.handleJrpcRequest(r, authLevel)
 		resp = append(resp, response)
+	}
+
+	if len(resp) == 1 && !isBatch {
+		return writeJSON(w, http.StatusOK, resp[0])
 	}
 
 	return writeJSON(w, http.StatusOK, resp)
