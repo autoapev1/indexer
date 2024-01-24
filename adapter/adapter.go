@@ -117,13 +117,13 @@ func ReadTokens(loc string) ([]*types.Token, error) {
 		address := record[0]
 		if _, exists := tokenMap[address]; !exists {
 			tokenMap[address] = &types.Token{
-				Address:        address,
-				Name:           record[1],
-				Symbol:         record[2],
-				Decimals:       uint8(decimals),
-				Creator:        record[4],
-				CreatedAtBlock: createdAtBlock,
-				ChainID:        0, // Set ChainID to 0 for now
+				Address:   address,
+				Name:      record[1],
+				Symbol:    record[2],
+				Decimals:  uint8(decimals),
+				Creator:   record[4],
+				CreatedAt: createdAtBlock,
+				ChainID:   0, // Set ChainID to 0 for now
 			}
 		}
 	}
@@ -135,7 +135,7 @@ func ReadTokens(loc string) ([]*types.Token, error) {
 
 	// sort by created at block asc
 	sort.Slice(tokens, func(i, j int) bool {
-		return tokens[i].CreatedAtBlock < tokens[j].CreatedAtBlock
+		return tokens[i].CreatedAt < tokens[j].CreatedAt
 	})
 
 	return tokens, nil

@@ -16,6 +16,7 @@ type Network struct {
 	config config.Config
 	Client *ethclient.Client
 	Web3   *web3.Web3
+	ready  bool
 }
 
 func NewNetwork(c types.Chain, conf config.Config) *Network {
@@ -23,6 +24,10 @@ func NewNetwork(c types.Chain, conf config.Config) *Network {
 		Chain:  c,
 		config: conf,
 	}
+}
+
+func (n *Network) Ready() bool {
+	return n.ready
 }
 
 func (n *Network) Init() error {

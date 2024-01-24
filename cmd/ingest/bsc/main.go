@@ -1,7 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/autoapev1/indexer/adapter"
@@ -10,11 +14,23 @@ import (
 )
 
 func main() {
+	var (
+		configFile string
+	)
+	flagSet := flag.NewFlagSet("ingest-eth", flag.ExitOnError)
+	flagSet.StringVar(&configFile, "config", "config.toml", "")
+	flagSet.Parse(os.Args[1:])
+
+	slog.Info("config", "configFile", configFile)
+	err := config.Parse(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 	conf := config.Get().Storage.Postgres
 	conf.Name = "BSC"
 
 	db := storage.NewPostgresDB(conf).WithChainID(56)
-	err := db.Init()
+	err = db.Init()
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +71,7 @@ func main() {
 }
 
 func IngestPairs(pg *storage.PostgresStore) error {
-	data, err := adapter.ReadPairs("./adapter/data/bsc.pairs.csv")
+	data, err := adapter.ReadPairs("./adapter/data/bsc.pairs2.csv")
 	if err != nil {
 		return err
 	}

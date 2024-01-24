@@ -165,7 +165,7 @@ func (n *Network) getPairs(ctx context.Context, decoder abi.ABI, signature commo
 				Token1Address: common.HexToAddress((l.Topics[2].String())).String(),
 				Fee:           l.Topics[3].Big().Int64(),
 				PoolType:      3,
-				PoolAddress:   "unknown",
+				PoolAddress:   "0x0000000000000000000000000000000000000000",
 				TickSpacing:   0,
 			}
 

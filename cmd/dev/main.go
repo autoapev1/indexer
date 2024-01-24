@@ -34,8 +34,14 @@ func main() {
 	if err := eth.Init(); err != nil {
 		panic(err)
 	}
+	h, err := db.GetHeights()
+	if err != nil {
+		panic(err)
+	}
 
-	getPairs(eth)
+	fmt.Printf("Heights %v\n", h)
+
+	//getPairs(eth)
 	// bts, err := eth.GetBlockTimestamps(0, 10)
 	// if err != nil {
 	// 	panic(err)

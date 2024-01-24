@@ -3,6 +3,8 @@ package storage
 import "github.com/autoapev1/indexer/types"
 
 type Store interface {
+	Init() error
+	Ready() bool
 	GetChainID() int64
 	GetHight() (int64, error)
 
@@ -27,4 +29,6 @@ type Store interface {
 	// util
 	GetUniqueAddressesFromPairs() ([]string, error)
 	GetUniqueAddressesFromTokens() ([]string, error)
+	GetPairsWithoutTokenInfo() ([]string, error)
+	GetHeights() (*types.Heights, error)
 }

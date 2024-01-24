@@ -20,6 +20,7 @@ type PostgresStore struct {
 	DB      *bun.DB
 	ChainID int64
 	debug   bool
+	ready   bool
 }
 
 func NewPostgresDB(conf config.PostgresConfig) *PostgresStore {
@@ -44,6 +45,10 @@ func (p *PostgresStore) WithChainID(chainID int64) *PostgresStore {
 func (p *PostgresStore) WithDebug() *PostgresStore {
 	p.debug = true
 	return p
+}
+
+func (p *PostgresStore) Ready() bool {
+	return p.ready
 }
 
 func (p *PostgresStore) Init() error {
@@ -160,7 +165,7 @@ func (p *PostgresStore) BulkInsertBlockTimestamp(blockTimestamps []*types.BlockT
 	batchSize := 10000
 
 	for i := 0; i < len(blockTimestamps); i += batchSize {
-		fmt.Printf("Inserting blocktimestamps %d to %d\n", i, i+batchSize)
+		fmt.Printf("inserting into block_timestamps \tfrom:%d \tto:%d\n", i, i+batchSize)
 		end := i + batchSize
 		if end > len(blockTimestamps) {
 			end = len(blockTimestamps)
@@ -182,10 +187,10 @@ func (p *PostgresStore) GetBlockTimestamps(to int64, from int64) ([]*types.Block
 	var blockTimestamps []*types.BlockTimestamp
 	ctx := context.Background()
 
-	err := p.DB.NewSelect().Model(&blockTimestamps).
+	err := p.DB.NewSelect().
+		Table("block_timestamps").
 		Where("block >= ?", from).
 		Where("block <= ?", to).
-		Limit(10000).
 		Scan(ctx)
 
 	if err != nil {
@@ -198,7 +203,10 @@ func (p *PostgresStore) GetBlockTimestamps(to int64, from int64) ([]*types.Block
 func (p *PostgresStore) GetHight() (int64, error) {
 	var block int64
 	ctx := context.Background()
-	err := p.DB.NewSelect().Model(&types.BlockTimestamp{}).ColumnExpr("MAX(block)").Scan(ctx, &block)
+	err := p.DB.NewSelect().
+		Table("block_timestamps").
+		ColumnExpr("MAX(block)").
+		Scan(ctx, &block)
 	if err != nil {
 		return block, err
 	}
@@ -220,7 +228,11 @@ func (p *PostgresStore) BulkInsertTokenInfo(tokenInfos []*types.Token) error {
 	batchSize := 10000
 
 	for i := 0; i < len(tokenInfos); i += batchSize {
-		fmt.Printf("Inserting tokens %d to %d\n", i, i+batchSize)
+		tokenInfos[i].Lower()
+	}
+
+	for i := 0; i < len(tokenInfos); i += batchSize {
+		fmt.Printf("inserting into tokens \tfrom:%d \tto:%d\n", i, i+batchSize)
 		end := i + batchSize
 		if end > len(tokenInfos) {
 			end = len(tokenInfos)
@@ -341,7 +353,11 @@ func (p *PostgresStore) BulkInsertPairInfo(pairInfos []*types.Pair) error {
 	batchSize := 100000
 
 	for i := 0; i < len(pairInfos); i += batchSize {
-		fmt.Printf("Inserting pairs %d to %d\n", i, i+batchSize)
+		pairInfos[i].Lower()
+	}
+
+	for i := 0; i < len(pairInfos); i += batchSize {
+		fmt.Printf("inserting into pairs \tfrom:%d \tto:%d\n", i, i+batchSize)
 		end := i + batchSize
 		if end > len(pairInfos) {
 			end = len(pairInfos)
@@ -495,6 +511,68 @@ func (p *PostgresStore) GetUniqueAddressesFromTokens() ([]string, error) {
 	}
 
 	return addresses, nil
+}
+
+func (p *PostgresStore) GetPairsWithoutTokenInfo() ([]string, error) {
+	pairs, err := p.GetUniqueAddressesFromPairs()
+	if err != nil {
+		return nil, err
+	}
+
+	tokenAddresses, err := p.GetUniqueAddressesFromTokens()
+	if err != nil {
+		return nil, err
+	}
+
+	tokens := make(map[string]struct{})
+	for _, token := range tokenAddresses {
+		tokens[strings.ToLower(token)] = struct{}{}
+	}
+
+	var missing []string
+	for _, pair := range pairs {
+		if _, exists := tokens[strings.ToLower(pair)]; !exists {
+			missing = append(missing, pair)
+		}
+	}
+
+	return missing, nil
+}
+
+func (p *PostgresStore) GetHeights() (*types.Heights, error) {
+	heights := &types.Heights{
+		Blocks: 0,
+		Tokens: 0,
+		Pairs:  0,
+	}
+
+	ctx := context.Background()
+
+	err := p.DB.NewSelect().
+		ColumnExpr("MAX(block)").
+		Model(&types.BlockTimestamp{}).
+		Scan(ctx, &heights.Blocks)
+	if err != nil {
+		return heights, err
+	}
+
+	err = p.DB.NewSelect().
+		ColumnExpr("MAX(created_at)").
+		Model(&types.Token{}).
+		Scan(ctx, &heights.Tokens)
+	if err != nil {
+		return heights, err
+	}
+
+	err = p.DB.NewSelect().
+		ColumnExpr("MAX(created_at)").
+		Model(&types.Pair{}).
+		Scan(ctx, &heights.Pairs)
+	if err != nil {
+		return heights, err
+	}
+
+	return heights, nil
 }
 
 var _ Store = &PostgresStore{}

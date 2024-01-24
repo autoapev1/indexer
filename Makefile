@@ -5,13 +5,13 @@ build:
 	@go build -o ./bin/ingest-bsc ./cmd/ingest/bsc/main.go
 
 run: build
-	@./bin/api
+	@./bin/api --config config.toml
 
 ingest-eth: build
-	@./bin/ingest-eth
+	@./bin/ingest-eth --config config.toml
 
 ingest-bsc: build
-	@./bin/ingest-bsc
+	@./bin/ingest-bsc --config config.toml
 
 postgres-up:
 	docker compose -f ./docker/postgres.yml up -d --remove-orphans

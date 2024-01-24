@@ -193,7 +193,7 @@ func (n *Network) getStage1TokenInfoBatch(ctx context.Context, batch []rpc.Batch
 
 	token.Creator = creator.Creator
 	if token.Creator == "" {
-		token.Creator = "unknown"
+		token.Creator = "0x0000000000000000000000000000000000000000"
 	}
 	token.CreationHash = creator.Hash
 	if token.CreationHash == "" {
@@ -284,7 +284,7 @@ func (n *Network) getStage2TokenInfoBatch(ctx context.Context, batch []rpc.Batch
 			slog.Error("getStage2TokenInfoBatch", "err", err)
 			blockNumberInt = 0
 		}
-		tokens[i].CreatedAtBlock = blockNumberInt
+		tokens[i].CreatedAt = blockNumberInt
 	}
 
 	return nil

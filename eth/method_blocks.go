@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-func (n *Network) GetBlockTimestamps(from int64, to int64) ([]*types.BlockTimestamp, error) {
+func (n *Network) GetBlockTimestamps(ctx context.Context, from int64, to int64) ([]*types.BlockTimestamp, error) {
 
 	blockTimestamps := make([]*types.BlockTimestamp, 0, to-from)
 
@@ -46,7 +46,7 @@ func (n *Network) GetBlockTimestamps(from int64, to int64) ([]*types.BlockTimest
 				wg.Done()
 			}()
 
-			bts, err := n.getBlockTimestampBatch(batch)
+			bts, err := n.getBlockTimestampBatch(ctx, batch)
 			if err != nil {
 				slog.Error("getBlockTimestampBatch", "err", err)
 				return
@@ -89,10 +89,9 @@ func (n *Network) makeBlockTimestampBatches(from int64, to int64, batchSize int6
 	return batches
 }
 
-func (n *Network) getBlockTimestampBatch(batch []rpc.BatchElem) ([]*types.BlockTimestamp, error) {
+func (n *Network) getBlockTimestampBatch(ctx context.Context, batch []rpc.BatchElem) ([]*types.BlockTimestamp, error) {
 	var blockTimestamps []*types.BlockTimestamp
 
-	ctx := context.Background()
 	if err := n.Client.Client().BatchCallContext(ctx, batch); err != nil {
 		return nil, err
 	}
