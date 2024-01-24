@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 type SortOrder string
 
 const (
@@ -15,12 +17,14 @@ const (
 	TokenSortByName      TokenSortBy = "name"
 	TokenSortBySymbol    TokenSortBy = "symbol"
 	TokenSortByDecimals  TokenSortBy = "decimals"
-	TokenSortByCreatedAt TokenSortBy = "created_at_block"
+	TokenSortByCreatedAt TokenSortBy = "created_at"
+	TokenSortByHash      TokenSortBy = "creation_hash"
 )
 
 func ValidateSortOrder(order SortOrder) bool {
-	switch order {
-	case SortASC, SortDESC:
+	o := strings.ToLower(string(order))
+	switch o {
+	case string(SortASC), string(SortDESC):
 		return true
 	default:
 		return false

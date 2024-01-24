@@ -188,7 +188,7 @@ func (p *PostgresStore) GetBlockTimestamps(to int64, from int64) ([]*types.Block
 	ctx := context.Background()
 
 	err := p.DB.NewSelect().
-		Table("block_timestamps").
+		Model(&blockTimestamps).
 		Where("block >= ?", from).
 		Where("block <= ?", to).
 		Scan(ctx)

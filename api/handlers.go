@@ -40,6 +40,8 @@ func (s *Server) handleJrpcRequest(r *JRPCRequest, authlvl auth.AuthLevel) Respo
 		return s.getBlockNumber(r)
 	case "idx_getChains":
 		return s.getChains(r)
+	case "idx_getHeights":
+		return s.getHeights(r)
 
 	// block timestamps
 	case "idx_getBlockTimestamps":
@@ -164,11 +166,98 @@ func (s *Server) getChains(r *JRPCRequest) *types.GetChainsResponse {
 	}
 }
 
-func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsResponse {
-	var req *types.GetBlockTimestampsRequest
+func (s *Server) getHeights(r *JRPCRequest) *types.GetHeightsResponse {
+	req := &types.GetHeightsRequest{}
+
+	if r.Params == nil {
+		return &types.GetHeightsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
 
 	err := json.Unmarshal(r.Params, req)
 	if err != nil {
+		return &types.GetHeightsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errUnmarshalParams.Error(),
+			},
+		}
+	}
+
+	err = req.Validate()
+	if err != nil {
+		return &types.GetHeightsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	store := s.stores.GetStore(*req.ChainID)
+	if store == nil {
+		return &types.GetHeightsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: "invalid chain_id",
+			},
+		}
+	}
+
+	hs, err := store.GetHeights()
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to get heights", "err", err)
+		}
+		return &types.GetHeightsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errInternalServer.Error(),
+			},
+		}
+	}
+
+	return &types.GetHeightsResponse{
+		ID:     r.ID,
+		Method: r.Method,
+		Result: hs,
+	}
+
+}
+
+func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsResponse {
+	req := &types.GetBlockTimestampsRequest{}
+
+	if r.Params == nil {
+		return &types.GetBlockTimestampsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
+
+	err := json.Unmarshal(r.Params, req)
+	if err != nil {
+		if s.debug {
+			slog.Error("failed to unmarshal params", "err", err)
+		}
 		return &types.GetBlockTimestampsResponse{
 			ID:     r.ID,
 			Method: r.Method,
@@ -191,7 +280,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.GetBlockTimestampsResponse{
 			ID:     r.ID,
@@ -203,7 +292,7 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 		}
 	}
 
-	blockTimestamps, err := store.GetBlockTimestamps(req.ToBlock, req.FromBlock)
+	blockTimestamps, err := store.GetBlockTimestamps(*req.ToBlock, *req.FromBlock)
 	if err != nil {
 		if s.debug {
 			slog.Error("failed to get block timestamps", "err", err)
@@ -226,7 +315,18 @@ func (s *Server) getBlockTimestamps(r *JRPCRequest) *types.GetBlockTimestampsRes
 }
 
 func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampResponse {
-	var req *types.GetBlockAtTimestampRequest
+	req := &types.GetBlockAtTimestampRequest{}
+
+	if r.Params == nil {
+		return &types.GetBlockAtTimestampResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
 
 	err := json.Unmarshal(r.Params, req)
 	if err != nil {
@@ -252,7 +352,7 @@ func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampR
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.GetBlockAtTimestampResponse{
 			ID:     r.ID,
@@ -264,7 +364,7 @@ func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampR
 		}
 	}
 
-	block, err := store.GetBlockAtTimestamp(req.Timestamp)
+	block, err := store.GetBlockAtTimestamp(*req.Timestamp)
 	if err != nil {
 		if s.debug {
 			slog.Error("failed to get block at timestamp", "err", err)
@@ -287,6 +387,17 @@ func (s *Server) getBlockAtTimestamp(r *JRPCRequest) *types.GetBlockAtTimestampR
 }
 func (s *Server) findTokens(r *JRPCRequest) *types.FindTokensResponse {
 	var req *types.FindTokensRequest
+
+	if r.Params == nil {
+		return &types.FindTokensResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
 
 	err := json.Unmarshal(r.Params, &req)
 	if err != nil {
@@ -312,7 +423,7 @@ func (s *Server) findTokens(r *JRPCRequest) *types.FindTokensResponse {
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.FindTokensResponse{
 			ID:     r.ID,
@@ -348,9 +459,20 @@ func (s *Server) findTokens(r *JRPCRequest) *types.FindTokensResponse {
 }
 
 func (s *Server) getTokenCount(r *JRPCRequest) *types.GetTokenCountResponse {
-	var req *types.GetTokenCountRequest
+	req := &types.GetTokenCountRequest{}
 
-	err := json.Unmarshal(r.Params, &req)
+	if r.Params == nil {
+		return &types.GetTokenCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
+
+	err := json.Unmarshal(r.Params, req)
 	if err != nil {
 		return &types.GetTokenCountResponse{
 			ID:     r.ID,
@@ -374,7 +496,7 @@ func (s *Server) getTokenCount(r *JRPCRequest) *types.GetTokenCountResponse {
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.GetTokenCountResponse{
 			ID:     r.ID,
@@ -409,9 +531,20 @@ func (s *Server) getTokenCount(r *JRPCRequest) *types.GetTokenCountResponse {
 }
 
 func (s *Server) findPairs(r *JRPCRequest) *types.FindPairsResponse {
-	var req *types.FindPairsRequest
+	req := &types.FindPairsRequest{}
 
-	err := json.Unmarshal(r.Params, &req)
+	if r.Params == nil {
+		return &types.FindPairsResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
+
+	err := json.Unmarshal(r.Params, req)
 	if err != nil {
 		return &types.FindPairsResponse{
 			ID:     r.ID,
@@ -435,7 +568,7 @@ func (s *Server) findPairs(r *JRPCRequest) *types.FindPairsResponse {
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.FindPairsResponse{
 			ID:     r.ID,
@@ -471,9 +604,20 @@ func (s *Server) findPairs(r *JRPCRequest) *types.FindPairsResponse {
 }
 
 func (s *Server) getPairCount(r *JRPCRequest) *types.GetPairCountResponse {
-	var req types.GetPairCountRequest
+	req := &types.GetPairCountRequest{}
 
-	err := json.Unmarshal(r.Params, &req)
+	if r.Params == nil {
+		return &types.GetPairCountResponse{
+			ID:     r.ID,
+			Method: r.Method,
+			Error: &types.JRPCError{
+				Code:    -32602,
+				Message: errMissingParams.Error(),
+			},
+		}
+	}
+
+	err := json.Unmarshal(r.Params, req)
 	if err != nil {
 		return &types.GetPairCountResponse{
 			ID:     r.ID,
@@ -497,7 +641,7 @@ func (s *Server) getPairCount(r *JRPCRequest) *types.GetPairCountResponse {
 		}
 	}
 
-	store := s.stores.GetStore(req.ChainID)
+	store := s.stores.GetStore(*req.ChainID)
 	if store == nil {
 		return &types.GetPairCountResponse{
 			ID:     r.ID,

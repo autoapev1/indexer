@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -10,9 +11,11 @@ import (
 	"github.com/autoapev1/indexer/config"
 	"github.com/autoapev1/indexer/storage"
 	"github.com/autoapev1/indexer/utils"
+	"github.com/autoapev1/indexer/version"
 )
 
 func main() {
+	fmt.Println(banner())
 	var (
 		configFile string
 	)
@@ -50,4 +53,16 @@ func main() {
 	server := api.NewServer(conf, storeMap)
 
 	log.Fatal(server.Listen(utils.ToAddress(conf.API.Host, conf.API.Port)))
+}
+
+func banner() string {
+	return fmt.Sprintf(`
+
+██╗███╗   ██╗██████╗ ███████╗██╗  ██╗███████╗██████╗ 
+██║████╗  ██║██╔══██╗██╔════╝╚██╗██╔╝██╔════╝██╔══██╗
+██║██╔██╗ ██║██║  ██║█████╗   ╚███╔╝ █████╗  ██████╔╝
+██║██║╚██╗██║██║  ██║██╔══╝   ██╔██╗ ██╔══╝  ██╔══██╗
+██║██║ ╚████║██████╔╝███████╗██╔╝ ██╗███████╗██║  ██║
+╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ v%s
+`, version.Version)
 }

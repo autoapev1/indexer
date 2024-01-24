@@ -12,6 +12,13 @@ type GetBlockNumberResponse struct {
 	Error  *JRPCError      `json:"error,omitempty"`
 }
 
+type GetHeightsResponse struct {
+	ID     string     `json:"id"`
+	Method string     `json:"method"`
+	Result *Heights   `json:"result,omitempty"`
+	Error  *JRPCError `json:"error,omitempty"`
+}
+
 type GetChainsResponse struct {
 	ID     string     `json:"id"`
 	Method string     `json:"method"`

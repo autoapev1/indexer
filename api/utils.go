@@ -14,6 +14,7 @@ var (
 	errMissingBody      = errors.New("missing request body")
 	errMissingAuth      = errors.New("missing Authentication header")
 	errUnmarshalParams  = errors.New("failed to unmarshal params")
+	errMissingParams    = errors.New("missing params")
 )
 
 type apiHandler func(w http.ResponseWriter, r *http.Request) error
